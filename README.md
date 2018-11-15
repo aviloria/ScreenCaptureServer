@@ -1,9 +1,11 @@
 # ScreenCaptureServer
-A Windows server tool for sharing desktop screenshots and video streams via HTTP
-Video streams are performed using Motion-JPEG format ([M-JPEG](https://en.wikipedia.org/wiki/Motion_JPEG))
+A Windows server tool for sharing desktop screenshots and video streams via HTTP.<br/>
+Video streams are performed using Motion-JPEG format ([M-JPEG](https://en.wikipedia.org/wiki/Motion_JPEG))<br/><br/>
 
-This project was developed using Microsft Visual Studio 2015.
-The server runs properly on Windows 7. Not tested on higher versions.
+This project was developed using Microsft Visual Studio 2015.<br/><br/>
+
+The server runs properly on Windows 7.<br/>
+Not tested on higher versions.<br/><br/>
 
 ## Running the server
 ```
