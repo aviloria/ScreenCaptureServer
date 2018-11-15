@@ -3,7 +3,7 @@
 /* Author: @aviloria (GitHub)                                                                    */
 /*-----------------------------------------------------------------------------------------------*/
 /* Copyleft license                                                                              */
-/*    YOU ARE ALLOWED TO FREELY DISTRIBUTE COPIES ANS MODIFIED VERSIONS OF THIS WORK WITH        */
+/*    YOU ARE ALLOWED TO FREELY DISTRIBUTE COPIES AND MODIFIED VERSIONS OF THIS WORK WITH        */
 /*    THE STIPULATION THAT THE SAME RIGHTS BE PRESERVED IN DERIVATIVE WORKS CREATED LATER.       */
 /*************************************************************************************************/
 //-------------------------------------------------------------------------------------------------
