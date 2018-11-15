@@ -25,7 +25,7 @@ enum class Mode { Unknown, ScreenShot, Video };
 
 struct RequestArguments
 {
-	uint32_t nWidth;	// Destination image width
+	uint32_t nWidth;    // Destination image width
 	uint32_t nHeight;   // Destination image height
 	uint32_t nX0;       // Snapshot offset in X-axis
 	uint32_t nY0;       // Snapshot offset in Y-axis
@@ -292,6 +292,8 @@ void onHttpConnection(WinSocket *pSocket, void * /*pParam*/)
 
 int main(int argc, char *argv[])
 {
+	::fprintf(stdout, "ScreenCaptureServer v1.0.1. By @aviloria\n");
+	
 	// Parameter validation
 	const char  *strInterface = nullptr;
 	uint16_t     nPort = 8080;
