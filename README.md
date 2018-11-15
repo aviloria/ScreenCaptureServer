@@ -12,11 +12,11 @@ Not tested on higher versions.<br/><br/>
 Syntax
   ScreenCaptureServer.exe \[options\]
 where 'options' is a combination of:
-  -i:<_strInterface_>      Server interface for accepting connections
+  -i:<strInterface>      Server interface for accepting connections
                          Default value: ANY
-  -p:<_nPort_>             Server port number for accepting connections
+  -p:<nPort>             Server port number for accepting connections
                          Default value: 8080
-  -c:<_nMaxConnections_>   Maximum simultanous connections
+  -c:<nMaxConnections>   Maximum simultanous connections
                          Default value: 10
 ```
 
