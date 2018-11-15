@@ -262,7 +262,6 @@ void onHttpConnection(WinSocket *pSocket, void * /*pParam*/)
 			img.Save(&stream, ImageFormatJPEG);
 
 			sendHttpOK(pSocket, "image/jpeg", stream.getData(), stream.getSize());
-			pSocket->close();
 			break;
 		}
 
@@ -279,10 +278,13 @@ void onHttpConnection(WinSocket *pSocket, void * /*pParam*/)
 				bContinue = sendHttpMultiPart(pSocket, "SCREENCAP_MJPEG", "image/jpeg", stream.getData(), stream.getSize());
 				std::this_thread::sleep_for(delay);
 			}
-			pSocket->close();
 			break;
 		}
 	}
+	
+	// Free up resources
+	pSocket->close();
+	delete pSocket;
 	delete[] pBuffer;
 }
 //-------------------------------------------------------------------------------------------------
