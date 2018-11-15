@@ -31,27 +31,31 @@ where 'options' is a combination of:
 http://<server-address>:<server-port>/getImage
   
 This request can include aditional parameters:
-  * width=<nWidth>      Destination image width
-  * height=<nHeight>    Destination image height
-  * x0=<nX0>            Snapshot window position (horizontal offset)
-  * y0=<nY0>            Snapshot window position (vertical offset)
-  * cx=<nCX>            Snapshot window width
-  * cy=<nCY>            Snapshot window height
+  * width=<nWidth>      Destination image width. Default value: same as nCX
+  * height=<nHeight>    Destination image height. Default value: same as nCY
+  * x0=<nX0>            Snapshot window position (horizontal offset). Default value: 0
+  * y0=<nY0>            Snapshot window position (vertical offset). Default value: 0
+  * cx=<nCX>            Snapshot window width. Default value: Original screen width resolution
+  * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
 ```
-  
+All these parameters are optional<br/>
+Provided _nWidth_ and _nHeight_ values can be modified in forder to keep aspect ratio, fitting to the best values.<br/><br/>
+
 **Snapshot mode:**
 ```
 http://<server-address>:<server-port>/getVideo
   
 This request can include aditional parameters:
-  * width=<nWidth>      Destination image width
-  * height=<nHeight>    Destination image height
-  * x0=<nX0>            Snapshot window position (horizontal offset)
-  * y0=<nY0>            Snapshot window position (vertical offset)
-  * cx=<nCX>            Snapshot window width
-  * cy=<nCY>            Snapshot window height
-  * fps=<nFPS>          Aprox. frame rate (in frames per second)
+  * width=<nWidth>      Destination image width. Default value: same as nCX
+  * height=<nHeight>    Destination image height. Default value: same as nCY
+  * x0=<nX0>            Snapshot window position (horizontal offset). Default value: 0
+  * y0=<nY0>            Snapshot window position (vertical offset). Default value: 0
+  * cx=<nCX>            Snapshot window width. Default value: Original screen width resolution
+  * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
+  * fps=<nFPS>          Aprox. frame rate (in frames per second). Default value: 25
 ```
+All these parameters are optional<br/>
+Provided _nWidth_ and _nHeight_ values can be modified in forder to keep aspect ratio, fitting to the best values.<br/><br/>
   
 **Examples:**
 ```
