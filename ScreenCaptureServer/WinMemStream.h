@@ -24,24 +24,24 @@ public:
 	~WinMemStream();
 
 	// IStream derived interfaces
-	HRESULT Clone(IStream **ppstm);
-	HRESULT Commit(DWORD grfCommitFlags);
-	HRESULT CopyTo(IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten);
-	HRESULT LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
-	HRESULT Revert();
-	HRESULT Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition);
-	HRESULT SetSize(ULARGE_INTEGER libNewSize);
-	HRESULT Stat(STATSTG *pstatstg, DWORD grfStatFlag);
-	HRESULT UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+	HRESULT STDMETHODCALLTYPE Clone(IStream **ppstm);
+	HRESULT STDMETHODCALLTYPE Commit(DWORD grfCommitFlags);
+	HRESULT STDMETHODCALLTYPE CopyTo(IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten);
+	HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+	HRESULT STDMETHODCALLTYPE Revert();
+	HRESULT STDMETHODCALLTYPE Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition);
+	HRESULT STDMETHODCALLTYPE SetSize(ULARGE_INTEGER libNewSize);
+	HRESULT STDMETHODCALLTYPE Stat(STATSTG *pstatstg, DWORD grfStatFlag);
+	HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
 
 	// IUnknown derived interfaces
-	HRESULT QueryInterface(const IID &riid, void **ppvObject);
-	ULONG AddRef(void);
-	ULONG Release(void);
+	HRESULT STDMETHODCALLTYPE QueryInterface(const IID &riid, void **ppvObject);
+	ULONG STDMETHODCALLTYPE AddRef(void);
+	ULONG STDMETHODCALLTYPE Release(void);
 
 	// ISequentialStream derived interfaces
-	HRESULT Read(void *, ULONG, ULONG *);
-	HRESULT Write(const void *pv, ULONG cb, ULONG *pcbWritten);
+	HRESULT STDMETHODCALLTYPE Read(void *, ULONG, ULONG *);
+	HRESULT STDMETHODCALLTYPE Write(const void *pv, ULONG cb, ULONG *pcbWritten);
 
 	// Own methods
 	void reset();
