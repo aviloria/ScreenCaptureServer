@@ -41,7 +41,7 @@ This request can include aditional parameters:
 All these parameters are optional<br/>
 Provided _nWidth_ and _nHeight_ values can be modified in forder to keep aspect ratio, fitting to the best values.<br/><br/>
 
-**Snapshot mode:**
+**Video-stream mode:**
 ```
 http://<server-address>:<server-port>/getVideo
   
@@ -56,7 +56,9 @@ This request can include aditional parameters:
 ```
 All these parameters are optional<br/>
 Provided _nWidth_ and _nHeight_ values can be modified in forder to keep aspect ratio, fitting to the best values.<br/><br/>
-  
+
+This stream can be easily embeded in a HTML page using tag **\<embed src="http://\<server-address\>:\<server-port\>/getVideo" /\>**
+
 **Examples:**
 ```
   http://127.0.0.1:8080/getImage?width=640&x0=100&y0=100&cx=400&cy=400
