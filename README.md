@@ -1,12 +1,11 @@
 # ScreenCaptureServer
-A Windows server tool for sharing desktop screenshots and video-streams via HTTP.<br/>
+<p>A Windows tool for sharing desktop screenshots and video-streams via HTTP.<br/>
 Screenshots are served in [JPEG](https://en.wikipedia.org/wiki/JPEG) format.<br/>
-Video-streams are served using [Motion-JPEG](https://en.wikipedia.org/wiki/Motion_JPEG) format.<br/><br/>
+Video-streams are served using [Motion-JPEG](https://en.wikipedia.org/wiki/Motion_JPEG) format.</p>
 
-This project was developed using Microsft Visual Studio 2015.<br/><br/>
-
+<p>This project was developed using Microsft Visual Studio 2015.<br/>
 The server runs properly on Windows 7.<br/>
-Not tested on higher versions.<br/><br/>
+Not tested on higher versions.</p
 
 ## Running the server
 ```
@@ -39,8 +38,8 @@ This request can include aditional parameters:
   * cx=<nCX>            Snapshot window width. Default value: Original screen width resolution
   * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
 ```
-All these parameters are optional<br/>
-Provided _nWidth_ and _nHeight_ values can be modified in forder to keep aspect ratio, fitting to the best values.<br/><br/>
+<p>All these parameters are optional<br/>
+Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
 
 **Video-stream mode:**
 ```
@@ -55,14 +54,14 @@ This request can include aditional parameters:
   * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
   * fps=<nFPS>          Aprox. frame rate (in frames per second). Default value: 25
 ```
-All these parameters are optional<br/>
-Provided _nWidth_ and _nHeight_ values can be modified in forder to keep aspect ratio, fitting to the best values.<br/><br/>
+<p>All these parameters are optional<br/>
+Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
 
-This stream can be easily embeded in a HTML page using tag:<br>
-```
+<p>This stream can be easily embeded in a HTML page using **embed** tag, i.e.:<br/>
+```html
 <embed src="http://<server-address>:<server-port>/getVideo" />
 ```
-<br>
+</p>
 
 **Examples:**
 ```
