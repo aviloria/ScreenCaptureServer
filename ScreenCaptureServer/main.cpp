@@ -243,6 +243,7 @@ void onHttpConnection(WinSocket *pSocket, void * /*pParam*/)
 	{
 		sendHttpBadRequest(pSocket);
 		pSocket->close();
+		delete pSocket;
 		return;
 	}
 	checkArguments (arguments);
