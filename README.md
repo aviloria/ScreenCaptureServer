@@ -57,8 +57,8 @@ This request can include aditional parameters:
 <p>All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
 
-<p>This stream can be easily embeded in a HTML page using **embed** tag, i.e.:</p>
-```html
+This stream can be easily embeded in a HTML page using **embed** tag, i.e.:
+```
 <embed src="http://<server-address>:<server-port>/getVideo" />
 ```
 
