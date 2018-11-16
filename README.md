@@ -4,8 +4,7 @@ Screenshots are served in <a href="https://en.wikipedia.org/wiki/JPEG">JPEG</a> 
 Video-streams are served using <a href="https://en.wikipedia.org/wiki/Motion_JPEG">Motion-JPEG</a> format.</p>
 
 <p>This project was developed using Microsft Visual Studio 2015.<br/>
-The server runs properly on Windows 7.<br/>
-Not tested on higher versions.</p
+The server runs properly on Windows 7, Windows 8.1 and Windows 10.<br/>
 
 ## Running the server
 ```
