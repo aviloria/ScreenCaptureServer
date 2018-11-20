@@ -9,7 +9,7 @@ The server runs properly on Windows 7, Windows 8.1 and Windows 10.<br/>
 ## Running the server
 ```
 Syntax
-  ScreenCaptureServer.exe \[options\]
+  ScreenCaptureServer.exe [options]
 where 'options' is a combination of:
   -i:<strInterface>      Server interface for accepting connections
                          Default value: ANY
