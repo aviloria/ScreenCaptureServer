@@ -45,7 +45,7 @@ public:
 
 	// Own methods
 	void reset();
-	const BYTE  *getData() const;
+	const BYTE *getData() const;
 	UINT getSize() const;
 
 protected:

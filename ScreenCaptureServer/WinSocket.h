@@ -92,6 +92,23 @@ public:
 	*/
 	uint32_t write(const uint8_t *pBuffer, uint32_t nBufferSize);
 
+	/**
+	* Get IP address
+	*
+	* @param strHostName The host name used as target
+	* @param nInterface The interface-index to request target's IP address
+	*                   If provided interface-index did not exist, it will return NULL
+	* return Host name
+	*/
+	static const char *getIpAddress(const char *strHostName, uint32_t nInterface=0);
+
+	/**
+	* Get host name
+	*
+	* return Host name
+	*/
+	static const char *getHostName();
+
 private:
 	SOCKET       _sSocket;
 	sockaddr_in  _addrInfo;

@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "WinMemStream.h"
 //-------------------------------------------------------------------------------------------------
-#if defined (_DEBUG)
+#if defined(_DEBUG)
 #  define LOG(...)  ::fprintf(stdout, __VA_ARGS__)
 #else
 #  define LOG(...)

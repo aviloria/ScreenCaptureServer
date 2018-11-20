@@ -13,22 +13,22 @@
 //-------------------------------------------------------------------------------------------------
 // WSAGetLastError codes: https://docs.microsoft.com/es-es/windows/desktop/WinSock/windows-sockets-error-codes-2
 //-------------------------------------------------------------------------------------------------
-#if defined (_DEBUG)
+#if defined(_DEBUG)
 #  define LOG(...)  ::fprintf(stdout, __VA_ARGS__)
 #else
 #  define LOG(...)
 #endif
 #define LOG_ERROR(...)  ::fprintf(stderr, __VA_ARGS__)
 //-------------------------------------------------------------------------------------------------
-#ifndef SD_SEND                                                                 
-#  define  SD_SEND      0                                                       
-#endif                                                                          
-#ifndef SD_RECEIVE                                                              
-#  define  SD_RECEIVE   1                                                       
-#endif                                                                          
-#ifndef SD_BOTH                                                                 
-#  define  SD_BOTH      2                                                       
-#endif  
+#ifndef SD_SEND
+#  define  SD_SEND      0
+#endif
+#ifndef SD_RECEIVE
+#  define  SD_RECEIVE   1
+#endif
+#ifndef SD_BOTH
+#  define  SD_BOTH      2
+#endif
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ public:
 	{
 		// Initialize Winsock
 		WSADATA wsaData;
-		const int  nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		const int nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (nResult)
 		{
 			LOG_ERROR("WSA_Helper::WSAStartup failed with error: %d\n", nResult);
@@ -80,13 +80,13 @@ WinSocket::~WinSocket()
 bool WinSocket::startServer(const char *strInterface, uint16_t nPort, FnConnection fnOnConnection, void *pParam, uint32_t nMaxConnections)
 {
 	// Host address resolution
-	unsigned long  nAddress = INADDR_ANY;
+	unsigned long nAddress = INADDR_ANY;
 	if (strInterface)
 	{
 		nAddress = inet_addr(strInterface);
 		if (nAddress == INADDR_NONE)
 		{
-			hostent  *pInfoHost = gethostbyname(strInterface);
+			hostent *pInfoHost = gethostbyname(strInterface);
 			if (!pInfoHost)
 			{
 				LOG_ERROR("WinSocket::gethostbyname() failed with error: %ld\n", WSAGetLastError());
@@ -125,7 +125,7 @@ bool WinSocket::startServer(const char *strInterface, uint16_t nPort, FnConnecti
 	// Accept clients connections
 	for (; ; )
 	{
-		WinSocket  *pClient = new WinSocket;
+		WinSocket *pClient = new WinSocket;
 		pClient->_sSocket = accept(_sSocket, (sockaddr*)&pClient->_addrInfo, nullptr);
 		if (pClient->_sSocket != INVALID_SOCKET)
 		{
@@ -153,10 +153,10 @@ bool WinSocket::open(const char *strAddress, uint16_t nPort)
 	}
 
 	// Host address resolution
-	unsigned long  nAddress = inet_addr(strAddress);
+	unsigned long nAddress = inet_addr(strAddress);
 	if (nAddress == INADDR_NONE)
 	{
-		hostent  *pInfoHost = gethostbyname(strAddress);
+		hostent *pInfoHost = gethostbyname(strAddress);
 		if (!pInfoHost)
 		{
 			LOG_ERROR("WinSocket::gethostbyname() failed with error: %ld\n", WSAGetLastError());
@@ -222,12 +222,12 @@ uint32_t WinSocket::read(uint8_t *pBuffer, uint32_t nBufferSize)
 	}
 
 	// Initialize file descriptor sets
-	fd_set  readset;
+	fd_set readset;
 	FD_ZERO(&readset);
 	FD_SET(_sSocket, &readset);
 
 	// Wait for valid data
-	int  nRet = 0;
+	int nRet = 0;
 	switch (select((int)_sSocket + 1, &readset, nullptr, nullptr, &_tvTimeout))
 	{
 	case -1: // Error
@@ -263,12 +263,12 @@ uint32_t WinSocket::write(const uint8_t *pBuffer, uint32_t nBufferSize)
 	}
 
 	// Initialize file descriptor sets
-	fd_set  writeset;
+	fd_set writeset;
 	FD_ZERO(&writeset);
 	FD_SET(_sSocket, &writeset);
 
 	// Wait for valid data
-	int  nRet = 0;
+	int nRet = 0;
 	switch (::select((int)_sSocket + 1, nullptr, &writeset, nullptr, &_tvTimeout))
 	{
 	case -1: // Error
@@ -293,6 +293,42 @@ uint32_t WinSocket::write(const uint8_t *pBuffer, uint32_t nBufferSize)
 		break;
 	}
 	return (uint32_t)nRet;
+}
+//-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+
+const char *WinSocket::getIpAddress(const char *strHostName, uint32_t nInterface)
+{
+	hostent *pInfoHost = gethostbyname(strHostName);
+	if (!pInfoHost)
+	{
+		LOG_ERROR("WinSocket::gethostbyname() failed with error: %ld\n", WSAGetLastError());
+		return nullptr;
+	}
+
+	uint32_t nMaxIndex = 0;
+	while (pInfoHost->h_addr_list[nMaxIndex]) ++nMaxIndex;
+	if (nInterface < nMaxIndex)
+	{
+		in_addr  addr;
+		addr.s_addr = *(u_long*)pInfoHost->h_addr_list[nInterface];
+		return inet_ntoa(addr);
+	}
+	return nullptr;
+}
+//-------------------------------------------------------------------------------------------------
+
+const char *WinSocket::getHostName()
+{
+	static char strHostname[256] = { 0 };
+	if (!*strHostname)
+	{
+		if (gethostname(strHostname, 256) != 0)
+		{
+			LOG_ERROR("WinSocket::getHostName() failed with error: %d\n", WSAGetLastError());
+		}
+	}
+	return strHostname;
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

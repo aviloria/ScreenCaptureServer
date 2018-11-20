@@ -12,26 +12,33 @@
 #include <thread>
 #include "WinSocket.h"
 #include "WinMemStream.h"
-#include "WinScreenCapture.h"
+#include "WinScreenCapture_GDI.h"
+#include "WinScreenCapture_GDI+.h"
+#include "WinScreenCapture_D3D9.h"
+#include "WinScreenCapture_D3D11.h"
 //-------------------------------------------------------------------------------------------------
 #pragma warning (disable : 4996) // Remove ::sprintf() security warnings
 //-------------------------------------------------------------------------------------------------
-#define CRLF  "\r\n"
+#define MAX_LINE_SIZE   1024
+#define BPS               32 //24 // Bits-per-pixel value to be used in the image
+#define CRLF          "\r\n"
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-enum class Mode { Unknown, ScreenShot, Video };
+enum class Mode { Unknown, ScreenShot, Video, HealthCheck };
+enum class Capturer { Unknown, None, GDI, GDIplus, D3D9, D3D11 };
 //-------------------------------------------------------------------------------------------------
 
 struct RequestArguments
 {
-	uint32_t nWidth;    // Destination image width
-	uint32_t nHeight;   // Destination image height
-	uint32_t nX0;       // Snapshot offset in X-axis
-	uint32_t nY0;       // Snapshot offset in Y-axis
-	uint32_t nCX;       // Snapshot width
-	uint32_t nCY;       // Snapshot height
-	uint32_t nFPS;      // Frame rate (video only)
+	uint32_t nWidth;     // Destination image width
+	uint32_t nHeight;    // Destination image height
+	uint32_t nX0;        // Snapshot offset in X-axis
+	uint32_t nY0;        // Snapshot offset in Y-axis
+	uint32_t nCX;        // Snapshot width
+	uint32_t nCY;        // Snapshot height
+	uint32_t nFPS;       // Frame rate (video only)
+	Capturer eCapturer;  // Capturer type to be used
 };
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -54,12 +61,12 @@ bool getLine(WinSocket *pSocket, char *strLine, uint32_t nLineSize)
 
 Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
 {
-	Mode  mode = Mode::Unknown;
-	char  strLine[1025];
+	Mode mode = Mode::Unknown;
+	char strLine[MAX_LINE_SIZE + 1];
 
 	// Get request info
 	const char *strArguments = nullptr;
-	if (getLine(pSocket, strLine, 1024))
+	if (getLine(pSocket, strLine, MAX_LINE_SIZE))
 	{
 		if (strstr(strLine, "GET /getImage") == strLine)
 		{
@@ -71,15 +78,16 @@ Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
 			strArguments = strLine + 13;
 			mode = Mode::Video;
 		}
-		else
+		else if (strstr(strLine, "GET /healthCheck") == strLine)
 		{
-			mode = Mode::Unknown;
+			arguments.eCapturer = Capturer::None;
+			mode = Mode::HealthCheck;
 		}
 	}
 	// Process request arguments
 	if (strArguments && (strArguments[0] != '\0'))
 	{
-		const char  *strAux = strstr(strArguments, "width=");
+		const char *strAux = strstr(strArguments, "width=");
 		if (strAux) arguments.nWidth = atoi(strAux + 6);
 		strAux = strstr(strArguments, "height=");
 		if (strAux) arguments.nHeight = atoi(strAux + 7);
@@ -93,10 +101,18 @@ Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
 		if (strAux) arguments.nCY = atoi(strAux + 3);
 		strAux = strstr(strArguments, "fps=");
 		if (strAux) arguments.nFPS = atoi(strAux + 4);
+		strAux = strstr(strArguments, "cap=GDI");
+		if (strAux) arguments.eCapturer = Capturer::GDI;
+		strAux = strstr(strArguments, "cap=GDI+");
+		if (strAux) arguments.eCapturer = Capturer::GDIplus;
+		strAux = strstr(strArguments, "cap=D3D9");
+		if (strAux) arguments.eCapturer = Capturer::D3D9;
+		strAux = strstr(strArguments, "cap=D3D11");
+		if (strAux) arguments.eCapturer = Capturer::D3D11;
 	}
 
 	// Get Host info
-	if (getLine(pSocket, strLine, 1024))
+	if (getLine(pSocket, strLine, MAX_LINE_SIZE))
 	{
 		if (strstr(strLine, "Host: ") == strLine)
 		{
@@ -105,7 +121,7 @@ Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
 	}
 
 	// Consume remaining header lines
-	while (getLine(pSocket, strLine, 1024) && (strLine[0] != '\0'));
+	while (getLine(pSocket, strLine, MAX_LINE_SIZE) && (strLine[0] != '\0'));
 
 	return mode;
 }
@@ -127,13 +143,33 @@ void sendHttpBadRequest(WinSocket *pSocket)
 		"<hr><center>screencap</center>" CRLF
 		"</body>" CRLF
 		"</html>";
-	pSocket->write((const uint8_t*) strBadRequest, (uint32_t) strlen(strBadRequest));
+	pSocket->write((const uint8_t*) strBadRequest, (uint32_t)strlen(strBadRequest));
+}
+//-------------------------------------------------------------------------------------------------
+
+void sendHttpInternalError(WinSocket *pSocket)
+{
+	static const char *strBadRequest =
+		"HTTP/1.1 500 Internal Server Error" CRLF
+		"server: screencap" CRLF
+		"Content-Type: text/html" CRLF
+		"Content-Length: 190" CRLF
+		"Connection: close" CRLF
+		CRLF
+		"<html>" CRLF
+		"<head><title>500 Internal Server Error</title></head>" CRLF
+		"<body bgcolor = \"white\">" CRLF
+		"<center><h1>500 Internal Server Error</h1></center>" CRLF
+		"<hr><center>screencap</center>" CRLF
+		"</body>" CRLF
+		"</html>";
+	pSocket->write((const uint8_t*) strBadRequest, (uint32_t)strlen(strBadRequest));
 }
 //-------------------------------------------------------------------------------------------------
 
 void sendHttpOK(WinSocket *pSocket, const char *strMIME, const uint8_t *pData, uint32_t nSize)
 {
-	char strHeader[256];
+	char strHeader[MAX_LINE_SIZE];
 	if (nSize)
 	{
 		::sprintf(strHeader,
@@ -142,6 +178,10 @@ void sendHttpOK(WinSocket *pSocket, const char *strMIME, const uint8_t *pData, u
 			"Content-Type: %s" CRLF
 			"Content-Length: %u" CRLF
 			"Connection: keep-alive" CRLF
+			"Allow: GET, OPTIONS" CRLF
+			"Access-Control-Allow-Origin: *" CRLF
+			"Access-Control-Allow-Methods: GET, OPTIONS" CRLF
+			"Access-Control-Allow-Headers: Content-Type" CRLF
 			CRLF,
 			strMIME, nSize);
 	}
@@ -152,34 +192,38 @@ void sendHttpOK(WinSocket *pSocket, const char *strMIME, const uint8_t *pData, u
 			"server: screencap" CRLF
 			"Content-Type: %s" CRLF
 			"Connection: keep-alive" CRLF
+			"Allow: GET, OPTIONS" CRLF
+			"Access-Control-Allow-Origin: *" CRLF
+			"Access-Control-Allow-Methods: GET, OPTIONS" CRLF
+			"Access-Control-Allow-Headers: Content-Type" CRLF
 			CRLF,
 			strMIME);
 	}
-	pSocket->write((const uint8_t*) strHeader, (uint32_t) strlen(strHeader));
+	pSocket->write((const uint8_t*) strHeader, (uint32_t)strlen(strHeader));
 	pSocket->write(pData, nSize);
 }
 //-------------------------------------------------------------------------------------------------
 
 bool sendHttpMultiPart(WinSocket *pSocket, const char *strBoundaryName, const char *strMIME, const uint8_t *pData, uint32_t nSize)
 {
-	char strMultipart[256];
+	char strMultipart[MAX_LINE_SIZE];
 	::sprintf(strMultipart,
 		"--%s" CRLF
 		"Content-Type: %s" CRLF
 		"Content-Length: %u" CRLF
 		CRLF,
 		strBoundaryName, strMIME, nSize);
-	return pSocket->write((const uint8_t*) strMultipart, (uint32_t) strlen(strMultipart)) &&
+	return pSocket->write((const uint8_t*) strMultipart, (uint32_t)strlen(strMultipart)) &&
 			(pSocket->write(pData, nSize) == nSize) &&
 			(pSocket->write((const uint8_t*) CRLF, 2) == 2);
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-void checkArguments(RequestArguments &arguments)
+IWinScreenCapture *checkArguments(RequestArguments &arguments)
 {
-	const uint32_t  nSizeX = ::GetSystemMetrics(SM_CXSCREEN);
-	const uint32_t  nSizeY = ::GetSystemMetrics(SM_CYSCREEN);
+	const uint32_t nSizeX = ::GetSystemMetrics(SM_CXSCREEN);
+	const uint32_t nSizeY = ::GetSystemMetrics(SM_CYSCREEN);
 	if (!arguments.nCX || !arguments.nCY ||
 		(arguments.nX0 + arguments.nCX > nSizeX) ||
 		(arguments.nY0 + arguments.nCY > nSizeY))
@@ -222,6 +266,32 @@ void checkArguments(RequestArguments &arguments)
 	// Set destination size
 	arguments.nWidth  = nDstWidth;
 	arguments.nHeight = nDstHeight;
+
+	// Set capturer
+	IWinScreenCapture *pRet = nullptr;
+	switch (arguments.eCapturer)
+	{
+		case Capturer::None:
+			break;
+		case Capturer::Unknown: // Fallthrough
+		case Capturer::GDI:
+			::fprintf(stdout, "Using GDI capturer...\n");
+			pRet = new WinScreenCapture_GDI;
+			break;
+		case Capturer::GDIplus:
+			::fprintf(stdout, "Using GDI+ capturer...\n");
+			pRet = new WinScreenCapture_GDIplus;
+			break;
+		case Capturer::D3D9:
+			::fprintf(stdout, "Using D3D9 capturer...\n");
+			pRet = new WinScreenCapture_D3D9;
+			break;
+		case Capturer::D3D11:
+			::fprintf(stdout, "Using D3D11 capturer...\n");
+			pRet = new WinScreenCapture_D3D11;
+			break;
+	}
+	return pRet;
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -229,56 +299,99 @@ void checkArguments(RequestArguments &arguments)
 void onHttpConnection(WinSocket *pSocket, void * /*pParam*/)
 {
 	RequestArguments arguments;
-	arguments.nWidth = 0;
-	arguments.nHeight = 0;
-	arguments.nX0 = 0;
-	arguments.nY0 = 0;
-	arguments.nCX = 0;
-	arguments.nCY = 0;
-	arguments.nFPS = 25;
-
-	// Process HTTP request
-	const Mode mode = processHttpRequest(pSocket, arguments);
-	if (mode == Mode::Unknown)
-	{
-		sendHttpBadRequest(pSocket);
-		pSocket->close();
-		delete pSocket;
-		return;
-	}
-	checkArguments (arguments);
+	arguments.nWidth    = 0;
+	arguments.nHeight   = 0;
+	arguments.nX0       = 0;
+	arguments.nY0       = 0;
+	arguments.nCX       = 0;
+	arguments.nCY       = 0;
+	arguments.nFPS      = 0;
+	arguments.eCapturer = Capturer::Unknown;
 
 	// Process the request
-	const uint32_t  nBufferSize = arguments.nWidth * arguments.nHeight * 3 + 100;
-	uint8_t *pBuffer = new uint8_t[nBufferSize];
-
-	CImage img;
-	img.Create(arguments.nWidth, arguments.nHeight, 24);
-	switch (mode)
+	switch (processHttpRequest(pSocket, arguments))
 	{
+		case Mode::Unknown:
+			sendHttpBadRequest(pSocket);
+			break;
+
+		case Mode::HealthCheck:
+		{
+			IWinScreenCapture *pScreenCapture = checkArguments(arguments);
+			char strJson[256];
+			::sprintf(strJson, "{ \"ip\" : \"%s\", \"hostname\" : \"%s\", \"width\" : %u, \"height\" : %u }",
+				pSocket->getIpAddress(WinSocket::getHostName()), WinSocket::getHostName(), arguments.nWidth, arguments.nHeight);
+			sendHttpOK(pSocket, "application/json", (const uint8_t*)strJson, (uint32_t)strlen(strJson));
+			if (pScreenCapture) delete pScreenCapture;
+			break;
+		}
+
 		case Mode::ScreenShot:
 		{
-			WinMemStream stream(pBuffer, nBufferSize, false);
-			WinScreenCapture::captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img);
-			img.Save(&stream, ImageFormatJPEG);
+			IWinScreenCapture *pScreenCapture = checkArguments(arguments);
+			if (pScreenCapture)
+			{
+				const uint32_t nBufferSize = ((arguments.nWidth * arguments.nHeight * BPS) / 8) + 100;
+				uint8_t *pBuffer = new uint8_t[nBufferSize];
 
-			sendHttpOK(pSocket, "image/jpeg", stream.getData(), stream.getSize());
+				CImage img;
+				img.Create(arguments.nWidth, arguments.nHeight, BPS);
+				if (pScreenCapture->captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img))
+				{
+					WinMemStream stream(pBuffer, nBufferSize, false);
+					img.Save(&stream, ImageFormatJPEG);
+					sendHttpOK(pSocket, "image/jpeg", stream.getData(), stream.getSize());
+				}
+				else sendHttpInternalError(pSocket);
+
+				delete[] pBuffer;
+				delete pScreenCapture;
+			}
+			else sendHttpInternalError(pSocket);
 			break;
 		}
 
 		case Mode::Video:
 		{
-			const std::chrono::milliseconds delay(1000 / arguments.nFPS);
-			sendHttpOK(pSocket, "multipart/x-mixed-replace; boundary=\"SCREENCAP_MJPEG\"", nullptr, 0);
-			for (bool bContinue = true; bContinue; )
+			IWinScreenCapture *pScreenCapture = checkArguments(arguments);
+			if (pScreenCapture)
 			{
-				WinMemStream stream(pBuffer, nBufferSize, false);
-				WinScreenCapture::captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img);
-				img.Save(&stream, ImageFormatJPEG);
+				const uint32_t nBufferSize = ((arguments.nWidth * arguments.nHeight * BPS) / 8) + 100;
+				uint8_t *pBuffer = new uint8_t[nBufferSize];
+				CImage img;
+				img.Create(arguments.nWidth, arguments.nHeight, BPS);
 
-				bContinue = sendHttpMultiPart(pSocket, "SCREENCAP_MJPEG", "image/jpeg", stream.getData(), stream.getSize());
-				std::this_thread::sleep_for(delay);
+				const double dExpectedTimeBetweenFrames = 1.0 / ((double)arguments.nFPS);
+				double dAvgTimeBetweenFrames = dExpectedTimeBetweenFrames;
+				std::chrono::high_resolution_clock::time_point tpBegin = std::chrono::high_resolution_clock::now();
+				if (pScreenCapture->captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img))
+				{
+					sendHttpOK(pSocket, "multipart/x-mixed-replace; boundary=\"SCREENCAP_MJPEG\"", nullptr, 0);
+					for (bool bContinue = true; bContinue; )
+					{
+						WinMemStream stream(pBuffer, nBufferSize, false);
+						img.Save(&stream, ImageFormatJPEG);
+						bContinue = sendHttpMultiPart(pSocket, "SCREENCAP_MJPEG", "image/jpeg", stream.getData(), stream.getSize()) &&
+							pScreenCapture->captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img);
+
+						// Compute elapsed time and perform a sleep to meet FPS requirements (if needed)
+						if (bContinue)
+						{
+							const std::chrono::high_resolution_clock::time_point tpEnd = std::chrono::high_resolution_clock::now();
+							const std::chrono::duration<double> timeSpan = std::chrono::duration_cast<std::chrono::duration<double>>(tpEnd - tpBegin);
+							dAvgTimeBetweenFrames += dExpectedTimeBetweenFrames * (timeSpan.count() - dAvgTimeBetweenFrames); // 1 second estimation window
+							if (dExpectedTimeBetweenFrames > dAvgTimeBetweenFrames)
+								std::this_thread::sleep_for(std::chrono::duration<double>(dExpectedTimeBetweenFrames - dAvgTimeBetweenFrames));
+							tpBegin = std::chrono::high_resolution_clock::now();
+						}
+					}
+				}
+				else sendHttpInternalError(pSocket);
+
+				delete[] pBuffer;
+				delete pScreenCapture;
 			}
+			else sendHttpInternalError(pSocket);
 			break;
 		}
 	}
@@ -286,19 +399,18 @@ void onHttpConnection(WinSocket *pSocket, void * /*pParam*/)
 	// Free up resources
 	pSocket->close();
 	delete pSocket;
-	delete[] pBuffer;
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
 {
-	::fprintf(stdout, "ScreenCaptureServer v1.0.1. By @aviloria\n");
+	::fprintf(stdout, "ScreenCaptureServer v1.0.2. By @aviloria\n");
 	
 	// Parameter validation
-	const char  *strInterface = nullptr;
-	uint16_t     nPort = 8080;
-	uint16_t     nMaxConnections = 10;
+	const char *strInterface = nullptr;
+	uint16_t    nPort = 8080;
+	uint16_t    nMaxConnections = 10;
 	for (int n = 1; n < argc; ++n)
 	{
 		if (strstr(argv[n], "-i:") == argv[n])

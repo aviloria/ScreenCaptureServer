@@ -7,26 +7,27 @@
 /*    THE STIPULATION THAT THE SAME RIGHTS BE PRESERVED IN DERIVATIVE WORKS CREATED LATER.       */
 /*************************************************************************************************/
 //-------------------------------------------------------------------------------------------------
-#ifndef __WINSCREENCAPTURE_H__
-#define __WINSCREENCAPTURE_H__
+#ifndef __WINSCREENCAPTURE_GDI_H__
+#define __WINSCREENCAPTURE_GDI_H__
 //-------------------------------------------------------------------------------------------------
-#include <Windows.h>
-#include <atlimage.h>
-//-------------------------------------------------------------------------------------------------
-DEFINE_GUID(ImageFormatJPEG, 0xb96b3cae, 0x0728, 0x11d3, 0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e);
+#include "IWinScreenCapture.h"
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
 /**
 * Namespace to hold different screen capture methods
 */
-namespace WinScreenCapture
+class WinScreenCapture_GDI : public IWinScreenCapture
 {
+public:
+	WinScreenCapture_GDI();
+	~WinScreenCapture_GDI();
+
 	BOOL captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img);
 };
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
-#endif // __WINSCREENCAPTURE_H__
+#endif // __WINSCREENCAPTURE_GDI_H__
 //-------------------------------------------------------------------------------------------------
