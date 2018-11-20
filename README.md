@@ -25,6 +25,22 @@ where 'options' is a combination of:
 ```
   
 ## Connecting to the server
+**HealthCheck mode:**
+Use this mode for checking server connection and getting current native screen size.
+```
+http://<server-address>:<server-port>/healthCheck
+```
+
+This request should return an HTTP 200 code including the following JSON payload information
+```
+{
+  ip : <server-ip>
+  hostname : <server-hostname>
+  width : <desktop-width>
+  height : <desktop-height>
+}
+```
+
 **Snapshot mode:**
 ```
 http://<server-address>:<server-port>/getImage
@@ -36,6 +52,14 @@ This request can include aditional parameters:
   * y0=<nY0>            Snapshot window position (vertical offset). Default value: 0
   * cx=<nCX>            Snapshot window width. Default value: Original screen width resolution
   * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
+  * cap=<CAPTURER>      Capturer method to be used
+  
+Where CAPTURER can be one of these methods:
+  * GDI                 Use GDI method to capture the desktop image (Default).
+  * GDI+                Use GDI+ method to capture the desktop image.
+  * D3D9                Use DirectX9 method to capture the desktop image.
+  * D3D11               Use DirectX11 method to capture the desktop image.
+                        Only for Windows 8 and higher. On Windows 7 only work with Aero themes.
 ```
 <p>All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
@@ -52,6 +76,14 @@ This request can include aditional parameters:
   * cx=<nCX>            Snapshot window width. Default value: Original screen width resolution
   * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
   * fps=<nFPS>          Aprox. frame rate (in frames per second). Default value: 25
+  * cap=<CAPTURER>      Capturer method to be used
+  
+Where CAPTURER can be one of these methods:
+  * GDI                 Use GDI method to capture the desktop image (Default).
+  * GDI+                Use GDI+ method to capture the desktop image.
+  * D3D9                Use DirectX9 method to capture the desktop image.
+  * D3D11               Use DirectX11 method to capture the desktop image.
+                        Only for Windows 8 and higher. On Windows 7 only work with Aero themes.
 ```
 <p>All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
@@ -64,5 +96,5 @@ This stream can be easily embeded in a HTML page using [&lt;embed&gt; tag](https
 **Examples:**
 ```
   http://127.0.0.1:8080/getImage?width=640&x0=100&y0=100&cx=400&cy=400
-  http://127.0.0.1:8080/getVideo?width=640&fps=10
+  http://127.0.0.1:8080/getVideo?width=640&fps=10&cap=D3D11
 ```
