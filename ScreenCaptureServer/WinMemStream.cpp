@@ -11,10 +11,11 @@
 #include "WinMemStream.h"
 //-------------------------------------------------------------------------------------------------
 #if defined(_DEBUG)
-#  define LOG(...)  ::fprintf(stdout, __VA_ARGS__)
+#  define LOG_DEBUG(...)  ::fprintf(stdout, __VA_ARGS__)
 #else
-#  define LOG(...)
+#  define LOG_DEBUG(...)
 #endif
+#define LOG_INFO(...)  ::fprintf(stdout, __VA_ARGS__)
 #define LOG_ERROR(...)  ::fprintf(stderr, __VA_ARGS__)
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -41,63 +42,63 @@ WinMemStream::~WinMemStream()
 
 HRESULT WinMemStream::Clone(IStream **ppstm)
 {
-	LOG("WinMemStream::Clone()\n");
+	LOG_DEBUG("WinMemStream::Clone()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::Commit(DWORD grfCommitFlags)
 {
-	LOG("WinMemStream::Commit()\n");
+	LOG_DEBUG("WinMemStream::Commit()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::CopyTo(IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
 {
-	LOG("WinMemStream::CopyTo()\n");
+	LOG_DEBUG("WinMemStream::CopyTo()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-	LOG("WinMemStream::LockRegion()\n");
+	LOG_DEBUG("WinMemStream::LockRegion()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::Revert()
 {
-	LOG("WinMemStream::Revert()\n");
+	LOG_DEBUG("WinMemStream::Revert()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-	LOG("WinMemStream::Seek()\n");
+	LOG_DEBUG("WinMemStream::Seek()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::SetSize(ULARGE_INTEGER libNewSize)
 {
-	LOG("WinMemStream::SetSize()\n");
+	LOG_DEBUG("WinMemStream::SetSize()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::Stat(STATSTG *pstatstg, DWORD grfStatFlag)
 {
-	LOG("WinMemStream::Stat()\n");
+	LOG_DEBUG("WinMemStream::Stat()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
 
 HRESULT WinMemStream::UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-	LOG("WinMemStream::UnlockRegion()\n");
+	LOG_DEBUG("WinMemStream::UnlockRegion()\n");
 	return S_OK;
 }
 //-------------------------------------------------------------------------------------------------
@@ -110,14 +111,14 @@ HRESULT WinMemStream::QueryInterface(const IID &riid, void **ppvObject)
 
 ULONG WinMemStream::AddRef(void)
 {
-	LOG("WinMemStream::AddRef()\n");
+	LOG_DEBUG("WinMemStream::AddRef()\n");
 	return ++_refCount;
 }
 //-------------------------------------------------------------------------------------------------
 
 ULONG WinMemStream::Release(void)
 {
-	LOG("WinMemStream::Release()\n");
+	LOG_DEBUG("WinMemStream::Release()\n");
 	return --_refCount;
 }
 //-------------------------------------------------------------------------------------------------
@@ -132,7 +133,7 @@ HRESULT WinMemStream::Read(void *pv, ULONG cb, ULONG *pcbReaded)
 HRESULT WinMemStream::Write(const void *pv, ULONG cb, ULONG *pcbWritten)
 {
 	ULONG nWritten = 0;
-	LOG("WinMemStream::Write()\n");
+	LOG_DEBUG("WinMemStream::Write()\n");
 	if (pv)
 	{
 		if (_pData && cb)

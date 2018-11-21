@@ -1,10 +1,10 @@
 # ScreenCaptureServer
-<p>A Windows tool for sharing desktop screenshots and video-streams via <a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a>.<br/>
+A Windows tool for sharing desktop screenshots and video-streams via <a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a>.<br/>
 Screenshots are served in <a href="https://en.wikipedia.org/wiki/JPEG">JPEG</a> format.<br/>
-Video-streams are served using <a href="https://en.wikipedia.org/wiki/Motion_JPEG">Motion-JPEG</a> format.</p>
+Video-streams are served using <a href="https://en.wikipedia.org/wiki/Motion_JPEG">Motion-JPEG</a> format.<br/>
 
-<p>This project was developed using Microsft Visual Studio 2015.<br/>
-The server runs properly on Windows 7, Windows 8.1 and Windows 10.<br/>
+This project was developed using Microsft Visual Studio 2015.<br/>
+The server runs properly on Windows 7, Windows 8.1 and Windows 10.
 
 ## Running the server
 ```
@@ -19,19 +19,20 @@ where 'options' is a combination of:
                          Default value: 10
 ```
 
-**Command line examples**:
+### Command line examples
+To run the server using port 80 (instead of port 8080 -default-) and allowing 5 simultaneous connections maximum (default value is 10), type:
 ```
   ScreenCaptureServer.exe -p:80 -c:5
 ```
   
 ## Connecting to the server
-**HealthCheck mode:**
+### HealthCheck mode
 Use this mode for checking server connection and getting current native screen size.
 ```
 http://<server-address>:<server-port>/healthCheck
 ```
 
-This request should return an HTTP 200 code including the following JSON payload information
+This request should return an HTTP 200 code including the following JSON payload information:
 ```
 {
   ip : <server-ip>
@@ -41,7 +42,7 @@ This request should return an HTTP 200 code including the following JSON payload
 }
 ```
 
-**Snapshot mode:**
+### Snapshot mode
 ```
 http://<server-address>:<server-port>/getImage
   
@@ -59,12 +60,12 @@ Where CAPTURER can be one of these methods:
   * GDI+                Use GDI+ method to capture the desktop image.
   * D3D9                Use DirectX9 method to capture the desktop image.
   * D3D11               Use DirectX11 method to capture the desktop image.
-                        Only for Windows 8 and higher. On Windows 7 only work with Aero themes.
+                        Only for Windows 8 and higher. On Windows 7, it's available only with Aero themes.
 ```
-<p>All these parameters are optional<br/>
-Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
+All these parameters are optional<br/>
+Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.
 
-**Video-stream mode:**
+### Video-stream mode
 ```
 http://<server-address>:<server-port>/getVideo
   
@@ -83,17 +84,17 @@ Where CAPTURER can be one of these methods:
   * GDI+                Use GDI+ method to capture the desktop image.
   * D3D9                Use DirectX9 method to capture the desktop image.
   * D3D11               Use DirectX11 method to capture the desktop image.
-                        Only for Windows 8 and higher. On Windows 7 only work with Aero themes.
+                        Only for Windows 8 and higher. On Windows 7, it's available only with Aero themes.
 ```
-<p>All these parameters are optional<br/>
-Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.</p>
+All these parameters are optional<br/>
+Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.<br/>
 
 This stream can be easily embeded in a HTML page using [&lt;embed&gt; tag](https://www.w3schools.com/tags/tag_embed.asp), i.e.:
 ```
 <embed src="http://<server-address>:<server-port>/getVideo" />
 ```
 
-**Examples:**
+### Examples
 ```
   http://127.0.0.1:8080/getImage?width=640&x0=100&y0=100&cx=400&cy=400
   http://127.0.0.1:8080/getVideo?width=640&fps=10&cap=D3D11

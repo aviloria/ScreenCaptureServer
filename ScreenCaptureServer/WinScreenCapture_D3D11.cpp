@@ -13,10 +13,11 @@
 // DXGI error codes: https://docs.microsoft.com/es-es/windows/desktop/direct3ddxgi/dxgi-error
 //-------------------------------------------------------------------------------------------------
 #if defined(_DEBUG)
-#  define LOG(...)  ::fprintf(stdout, __VA_ARGS__)
+#  define LOG_DEBUG(...)  ::fprintf(stdout, __VA_ARGS__)
 #else
-#  define LOG(...)
+#  define LOG_DEBUG(...)
 #endif
+#define LOG_INFO(...)  ::fprintf(stdout, __VA_ARGS__)
 #define LOG_ERROR(...)  ::fprintf(stderr, __VA_ARGS__)
 //-------------------------------------------------------------------------------------------------
 #define DUPLICATE_OUTPUT_RETRIES   10

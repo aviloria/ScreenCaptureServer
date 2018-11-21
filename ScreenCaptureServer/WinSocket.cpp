@@ -14,10 +14,11 @@
 // WSAGetLastError codes: https://docs.microsoft.com/es-es/windows/desktop/WinSock/windows-sockets-error-codes-2
 //-------------------------------------------------------------------------------------------------
 #if defined(_DEBUG)
-#  define LOG(...)  ::fprintf(stdout, __VA_ARGS__)
+#  define LOG_DEBUG(...)  ::fprintf(stdout, __VA_ARGS__)
 #else
-#  define LOG(...)
+#  define LOG_DEBUG(...)
 #endif
+#define LOG_INFO(...)  ::fprintf(stdout, __VA_ARGS__)
 #define LOG_ERROR(...)  ::fprintf(stderr, __VA_ARGS__)
 //-------------------------------------------------------------------------------------------------
 #ifndef SD_SEND
