@@ -39,6 +39,7 @@ This request should return an HTTP 200 code including the following JSON payload
   hostname : <server-hostname>
   width : <desktop-width>
   height : <desktop-height>
+  caps : <capability-list>
 }
 ```
 
