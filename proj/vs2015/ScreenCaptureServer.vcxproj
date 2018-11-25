@@ -146,22 +146,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="WinMemStream.cpp" />
-    <ClCompile Include="WinScreenCapture_D3D11.cpp" />
-    <ClCompile Include="WinScreenCapture_D3D9.cpp" />
-    <ClCompile Include="WinScreenCapture_GDI+.cpp" />
-    <ClCompile Include="WinScreenCapture_GDI.cpp" />
-    <ClCompile Include="WinSocket.cpp" />
+    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\WinMemStream.cpp" />
+    <ClCompile Include="..\..\src\WinScreenCapture_D3D11.cpp" />
+    <ClCompile Include="..\..\src\WinScreenCapture_D3D9.cpp" />
+    <ClCompile Include="..\..\src\WinScreenCapture_GDI+.cpp" />
+    <ClCompile Include="..\..\src\WinScreenCapture_GDI.cpp" />
+    <ClCompile Include="..\..\src\WinSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IWinScreenCapture.h" />
-    <ClInclude Include="WinMemStream.h" />
-    <ClInclude Include="WinScreenCapture_D3D11.h" />
-    <ClInclude Include="WinScreenCapture_D3D9.h" />
-    <ClInclude Include="WinScreenCapture_GDI+.h" />
-    <ClInclude Include="WinScreenCapture_GDI.h" />
-    <ClInclude Include="WinSocket.h" />
+    <ClInclude Include="..\..\src\IWinScreenCapture.h" />
+    <ClInclude Include="..\..\src\WinMemStream.h" />
+    <ClInclude Include="..\..\src\WinScreenCapture_D3D11.h" />
+    <ClInclude Include="..\..\src\WinScreenCapture_D3D9.h" />
+    <ClInclude Include="..\..\src\WinScreenCapture_GDI+.h" />
+    <ClInclude Include="..\..\src\WinScreenCapture_GDI.h" />
+    <ClInclude Include="..\..\src\WinSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

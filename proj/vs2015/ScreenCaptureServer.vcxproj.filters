@@ -15,48 +15,48 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="..\..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinMemStream.cpp">
+    <ClCompile Include="..\..\src\WinMemStream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinScreenCapture_D3D9.cpp">
+    <ClCompile Include="..\..\src\WinScreenCapture_D3D9.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinScreenCapture_D3D11.cpp">
+    <ClCompile Include="..\..\src\WinScreenCapture_D3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinScreenCapture_GDI.cpp">
+    <ClCompile Include="..\..\src\WinScreenCapture_GDI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinScreenCapture_GDI+.cpp">
+    <ClCompile Include="..\..\src\WinScreenCapture_GDI+.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinSocket.cpp">
+    <ClCompile Include="..\..\src\WinSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IWinScreenCapture.h">
+    <ClInclude Include="..\..\src\IWinScreenCapture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinMemStream.h">
+    <ClInclude Include="..\..\src\WinMemStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinScreenCapture_D3D9.h">
+    <ClInclude Include="..\..\src\WinScreenCapture_D3D9.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinScreenCapture_D3D11.h">
+    <ClInclude Include="..\..\src\WinScreenCapture_D3D11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinScreenCapture_GDI.h">
+    <ClInclude Include="..\..\src\WinScreenCapture_GDI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinScreenCapture_GDI+.h">
+    <ClInclude Include="..\..\src\WinScreenCapture_GDI+.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinSocket.h">
+    <ClInclude Include="..\..\src\WinSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
