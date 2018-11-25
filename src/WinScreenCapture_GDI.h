@@ -15,8 +15,8 @@
 //-------------------------------------------------------------------------------------------------
 
 /**
-* Namespace to hold different screen capture methods
-*/
+ * Screen capture class for capturing using GDI
+ */
 class WinScreenCapture_GDI : public IWinScreenCapture
 {
 public:
@@ -24,6 +24,9 @@ public:
 	~WinScreenCapture_GDI();
 
 	BOOL captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img);
+
+private:
+	HDC _hDCScreen;
 };
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

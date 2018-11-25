@@ -30,6 +30,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -37,12 +38,14 @@
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -50,6 +53,7 @@
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -152,6 +156,7 @@
     <ClCompile Include="..\..\src\WinScreenCapture_D3D9.cpp" />
     <ClCompile Include="..\..\src\WinScreenCapture_GDI+.cpp" />
     <ClCompile Include="..\..\src\WinScreenCapture_GDI.cpp" />
+    <ClCompile Include="..\..\src\WinScreenCapture_RDP.cpp" />
     <ClCompile Include="..\..\src\WinSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +166,7 @@
     <ClInclude Include="..\..\src\WinScreenCapture_D3D9.h" />
     <ClInclude Include="..\..\src\WinScreenCapture_GDI+.h" />
     <ClInclude Include="..\..\src\WinScreenCapture_GDI.h" />
+    <ClInclude Include="..\..\src\WinScreenCapture_RDP.h" />
     <ClInclude Include="..\..\src\WinSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

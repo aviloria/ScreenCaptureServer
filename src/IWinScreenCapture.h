@@ -18,7 +18,7 @@ DEFINE_GUID(ImageFormatJPEG, 0xb96b3cae, 0x0728, 0x11d3, 0x9d, 0x7b, 0x00, 0x00,
 //-------------------------------------------------------------------------------------------------
 
 /**
-* Namespace to hold different screen capture methods
+* Interface class to define basic screen capture methods
 */
 class IWinScreenCapture
 {

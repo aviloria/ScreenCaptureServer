@@ -15,8 +15,8 @@
 //-------------------------------------------------------------------------------------------------
 
 /**
-* Namespace to hold different screen capture methods
-*/
+ * Screen capture class for capturing using GDI+
+ */
 class WinScreenCapture_GDIplus : public IWinScreenCapture
 {
 public:
@@ -27,6 +27,7 @@ public:
 
 private:
 	ULONG_PTR _gdiplusToken;
+	HDC _hDCScreen;
 };
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

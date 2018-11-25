@@ -41,10 +41,10 @@ WinScreenCapture_D3D9::WinScreenCapture_D3D9()
 			parameters.Windowed         = TRUE;
 
 			hr = _pD3D->CreateDevice(nAdapter, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &parameters, &_pDevice);
-			if (SUCCEEDED(hr) && _pDevice)
+			if (SUCCEEDED(hr))
 			{
 				hr = _pDevice->CreateOffscreenPlainSurface(mode.Width, mode.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &_pSurface, nullptr);
-				if (!(SUCCEEDED(hr) && _pSurface))
+				if (!SUCCEEDED(hr))
 				{
 					LOG_ERROR("CreateOffscreenPlainSurface() returned error code 0x%08x!\n", (UINT)hr);
 				}

@@ -36,6 +36,9 @@
     <ClCompile Include="..\..\src\WinSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\WinScreenCapture_RDP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\IWinScreenCapture.h">
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\WinSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\WinScreenCapture_RDP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

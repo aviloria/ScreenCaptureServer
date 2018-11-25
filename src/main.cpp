@@ -16,6 +16,7 @@
 #include "WinScreenCapture_GDI+.h"
 #include "WinScreenCapture_D3D9.h"
 #include "WinScreenCapture_D3D11.h"
+#include "WinScreenCapture_RDP.h"
 //-------------------------------------------------------------------------------------------------
 #pragma warning (disable : 4996) // Remove ::sprintf() security warnings
 //-------------------------------------------------------------------------------------------------
@@ -46,7 +47,7 @@
 //-------------------------------------------------------------------------------------------------
 
 enum class Mode { Unknown, ScreenShot, Video, HealthCheck };
-enum class Capturer { Unknown, None, GDI, GDIplus, D3D9, D3D11 };
+enum class Capturer { Unknown, None, GDI, GDIplus, D3D9, D3D11, RDP };
 //-------------------------------------------------------------------------------------------------
 
 struct RequestArguments
@@ -129,6 +130,8 @@ Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
 		if (strAux) arguments.eCapturer = Capturer::D3D9;
 		strAux = ::strstr(strArguments, "cap=D3D11");
 		if (strAux) arguments.eCapturer = Capturer::D3D11;
+		strAux = ::strstr(strArguments, "cap=RDP");
+		if (strAux) arguments.eCapturer = Capturer::RDP;
 	}
 
 	// Get Host info
@@ -326,6 +329,14 @@ IWinScreenCapture *checkArguments(RequestArguments &arguments, const char *strCa
 			}
 			else LOG_ERROR("D3D11 capture not available!\n");
 			break;
+		case Capturer::RDP:
+			if (::strstr(strCaps, "\"RDP\""))
+			{
+				LOG_INFO("Using RDP capturer...\n");
+				pRet = new WinScreenCapture_RDP;
+			}
+			else LOG_ERROR("RDP capture not available!\n");
+			break;
 	}
 	return pRet;
 }
@@ -457,7 +468,7 @@ void onHttpConnection(WinSocket *pSocket, void *pParam)
 
 int main(int argc, char *argv[])
 {
-	LOG_INFO("ScreenCaptureServer v1.0.2. By @aviloria\n");
+	LOG_INFO("ScreenCaptureServer v1.0.3. By @aviloria\n");
 	
 	// Parameter validation
 	const char *strInterface = nullptr;
@@ -506,7 +517,8 @@ int main(int argc, char *argv[])
 		CHECK_CAP(WinScreenCapture_GDIplus, strCaps, nCaps, "GDI+",  imgTmp);
 		CHECK_CAP(WinScreenCapture_D3D9,    strCaps, nCaps, "D3D9",  imgTmp);
 		CHECK_CAP(WinScreenCapture_D3D11,   strCaps, nCaps, "D3D11", imgTmp);
-		::strcat(strCaps, " ]");
+    CHECK_CAP(WinScreenCapture_RDP,     strCaps, nCaps, "RDP",   imgTmp);
+    ::strcat(strCaps, " ]");
 	}
 
 	// Log server info

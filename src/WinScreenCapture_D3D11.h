@@ -17,8 +17,8 @@
 //-------------------------------------------------------------------------------------------------
 
 /**
-* Namespace to hold different screen capture methods
-*/
+ * Screen capture class for capturing using Direct3D 11
+ */
 class WinScreenCapture_D3D11 : public IWinScreenCapture
 {
 public:

@@ -62,6 +62,7 @@ Where CAPTURER can be one of these methods:
   * D3D9                Use DirectX9 method to capture the desktop image.
   * D3D11               Use DirectX11 method to capture the desktop image.
                         Only for Windows 8 and higher. On Windows 7, it's available only with Aero themes.
+  * RDP                 Use Remote Desktop Mirror Driver method to capture the desktop image (Windows 7 only)
 ```
 All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.
@@ -86,6 +87,7 @@ Where CAPTURER can be one of these methods:
   * D3D9                Use DirectX9 method to capture the desktop image.
   * D3D11               Use DirectX11 method to capture the desktop image.
                         Only for Windows 8 and higher. On Windows 7, it's available only with Aero themes.
+  * RDP                 Use Remote Desktop Mirror Driver method to capture the desktop image (Windows 7 only)
 ```
 All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.<br/>
