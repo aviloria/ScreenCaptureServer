@@ -34,7 +34,7 @@ WinScreenCapture_D3D9::WinScreenCapture_D3D9(const TCHAR *strDisplayDevice)
 			// Convert strDisplayDevice from wchar to char (if needed)
 #if defined(_UNICODE)
 			char strTargetDisplayDevice[32] = { '\0' };
-			const INT nTargetDisplayDeviceLength = WideCharToMultiByte(CP_ACP, 0, strDisplayDevice, (int)::_tcslen(strDisplayDevice), strTargetDisplayDevice, 32, NULL, NULL);
+			INT nTargetDisplayDeviceLength = WideCharToMultiByte(CP_ACP, 0, strDisplayDevice, (int)::_tcslen(strDisplayDevice), strTargetDisplayDevice, 32, NULL, NULL);
 			if (nTargetDisplayDeviceLength < 0) nTargetDisplayDeviceLength = 0;
 			strTargetDisplayDevice[nTargetDisplayDeviceLength] = '\0';
 #else
