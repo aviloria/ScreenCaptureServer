@@ -33,10 +33,13 @@
     <ClCompile Include="..\..\src\WinScreenCapture_GDI+.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\WinSocket.cpp">
+    <ClCompile Include="..\..\src\WinScreenCapture_RDP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\WinScreenCapture_RDP.cpp">
+    <ClCompile Include="..\..\src\WinScreenCaptureHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\WinSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,10 +62,13 @@
     <ClInclude Include="..\..\src\WinScreenCapture_GDI+.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\WinSocket.h">
+    <ClInclude Include="..\..\src\WinScreenCapture_RDP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\WinScreenCapture_RDP.h">
+    <ClInclude Include="..\..\src\WinScreenCaptureHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\WinSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

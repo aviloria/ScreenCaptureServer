@@ -54,17 +54,20 @@ const char *getStatusStr(const Gdiplus::Status &st)
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-WinScreenCapture_GDIplus::WinScreenCapture_GDIplus()
+WinScreenCapture_GDIplus::WinScreenCapture_GDIplus(const TCHAR *strDisplayDevice)
 	: _gdiplusToken(NULL)
-	, _hDCScreen (NULL)
+	, _hDCScreen(NULL)
 {
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::Status st = Gdiplus::GdiplusStartup(&_gdiplusToken, &gdiplusStartupInput, NULL);
 	if (st == Gdiplus::Status::Ok)
 	{
+		if (!strDisplayDevice)
+			strDisplayDevice = _T("DISPLAY");
+
 		// Create a screen device context
 		//_hDCScreen = GetDC(NULL); // HDC only of primary monitor
-		_hDCScreen = ::CreateDC(_T ("DISPLAY"), NULL, NULL, NULL); // Create a DC covering all the monitors
+		_hDCScreen = ::CreateDC(strDisplayDevice, NULL, NULL, NULL); // Create a DC covering all the monitors
 	}
 	else LOG_ERROR("GdiplusStartup() returned '%s'", getStatusStr(st));
 }
@@ -78,6 +81,15 @@ WinScreenCapture_GDIplus::~WinScreenCapture_GDIplus()
 		::DeleteDC(_hDCScreen);
 	}
 	Gdiplus::GdiplusShutdown(_gdiplusToken);
+}
+//-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+
+BOOL WinScreenCapture_GDIplus::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const
+{
+	nSizeX = ::GetSystemMetrics(SM_CXSCREEN);
+	nSizeY = ::GetSystemMetrics(SM_CYSCREEN);
+	return TRUE;
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

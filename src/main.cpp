@@ -12,11 +12,7 @@
 #include <thread>
 #include "WinSocket.h"
 #include "WinMemStream.h"
-#include "WinScreenCapture_GDI.h"
-#include "WinScreenCapture_GDI+.h"
-#include "WinScreenCapture_D3D9.h"
-#include "WinScreenCapture_D3D11.h"
-#include "WinScreenCapture_RDP.h"
+#include "WinScreenCaptureHelper.h"
 //-------------------------------------------------------------------------------------------------
 #pragma warning (disable : 4996) // Remove ::sprintf() security warnings
 //-------------------------------------------------------------------------------------------------
@@ -32,35 +28,9 @@
 #define LOG_INFO(...)  ::fprintf(stdout, __VA_ARGS__)
 #define LOG_ERROR(...)  ::fprintf(stderr, __VA_ARGS__)
 //-------------------------------------------------------------------------------------------------
-#define CHECK_CAP(_TCap_, _str_, _count_, _tag_, _img_) \
-{ \
-	LOG_INFO("+ Cheching " _tag_ "...\n"); \
-	_TCap_  wsc; \
-	if (wsc.captureScreenRect(0, 0, _img_.GetWidth(), _img_.GetHeight(), _img_)) \
-	{ \
-		char *strSeparator[2] = { " ", ", " }; \
-		::strcat(_str_, strSeparator[_count_++ > 0]); \
-		::strcat(_str_, "\"" _tag_ "\""); \
-	} \
-}
-//-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
 enum class Mode { Unknown, ScreenShot, Video, HealthCheck };
-enum class Capturer { Unknown, None, GDI, GDIplus, D3D9, D3D11, RDP };
-//-------------------------------------------------------------------------------------------------
-
-struct RequestArguments
-{
-	uint32_t nWidth;     // Destination image width
-	uint32_t nHeight;    // Destination image height
-	uint32_t nX0;        // Snapshot offset in X-axis
-	uint32_t nY0;        // Snapshot offset in Y-axis
-	uint32_t nCX;        // Snapshot width
-	uint32_t nCY;        // Snapshot height
-	uint32_t nFPS;       // Frame rate (video only)
-	Capturer eCapturer;  // Capturer type to be used
-};
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
@@ -80,7 +50,7 @@ bool getLine(WinSocket *pSocket, char *strLine, uint32_t nLineSize)
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
+Mode processHttpRequest(WinSocket *pSocket, WinScreenCaptureHelper::Settings &settings)
 {
 	Mode mode = Mode::Unknown;
 	char strLine[MAX_LINE_SIZE + 1];
@@ -101,37 +71,49 @@ Mode processHttpRequest(WinSocket *pSocket, RequestArguments &arguments)
 		}
 		else if (::strstr(strLine, "GET /healthCheck") == strLine)
 		{
-			arguments.eCapturer = Capturer::None;
+			settings.eCapturer = WinScreenCaptureHelper::Capturer::None;
 			mode = Mode::HealthCheck;
 		}
 	}
-	// Process request arguments
+	// Process request settings
 	if (strArguments && (strArguments[0] != '\0'))
 	{
 		const char *strAux = ::strstr(strArguments, "width=");
-		if (strAux) arguments.nWidth = atoi(strAux + 6);
+		if (strAux) settings.nWidth = atoi(strAux + 6);
 		strAux = ::strstr(strArguments, "height=");
-		if (strAux) arguments.nHeight = atoi(strAux + 7);
+		if (strAux) settings.nHeight = atoi(strAux + 7);
 		strAux = ::strstr(strArguments, "x0=");
-		if (strAux) arguments.nX0 = atoi(strAux + 3);
+		if (strAux) settings.nX0 = atoi(strAux + 3);
 		strAux = ::strstr(strArguments, "y0=");
-		if (strAux) arguments.nY0 = atoi(strAux + 3);
+		if (strAux) settings.nY0 = atoi(strAux + 3);
 		strAux = ::strstr(strArguments, "cx=");
-		if (strAux) arguments.nCX = atoi(strAux + 3);
+		if (strAux) settings.nCX = atoi(strAux + 3);
 		strAux = ::strstr(strArguments, "cy=");
-		if (strAux) arguments.nCY = atoi(strAux + 3);
+		if (strAux) settings.nCY = atoi(strAux + 3);
 		strAux = ::strstr(strArguments, "fps=");
-		if (strAux) arguments.nFPS = atoi(strAux + 4);
+		if (strAux) settings.nFPS = atoi(strAux + 4);
 		strAux = ::strstr(strArguments, "cap=GDI");
-		if (strAux) arguments.eCapturer = Capturer::GDI;
+		if (strAux) settings.eCapturer = WinScreenCaptureHelper::Capturer::GDI;
 		strAux = ::strstr(strArguments, "cap=GDI+");
-		if (strAux) arguments.eCapturer = Capturer::GDIplus;
+		if (strAux) settings.eCapturer = WinScreenCaptureHelper::Capturer::GDIplus;
 		strAux = ::strstr(strArguments, "cap=D3D9");
-		if (strAux) arguments.eCapturer = Capturer::D3D9;
+		if (strAux) settings.eCapturer = WinScreenCaptureHelper::Capturer::D3D9;
 		strAux = ::strstr(strArguments, "cap=D3D11");
-		if (strAux) arguments.eCapturer = Capturer::D3D11;
+		if (strAux) settings.eCapturer = WinScreenCaptureHelper::Capturer::D3D11;
 		strAux = ::strstr(strArguments, "cap=RDP");
-		if (strAux) arguments.eCapturer = Capturer::RDP;
+		if (strAux) settings.eCapturer = WinScreenCaptureHelper::Capturer::RDP;
+		strAux = ::strstr(strArguments, "dev=");
+		if (strAux)
+		{
+			uint32_t nPos = 0;
+			strAux += 4;
+			while ((nPos < sizeof(settings.strDevice)) && (strAux[nPos] != ' ') && (strAux[nPos] != '&') && (strAux[nPos] != '\0'))
+			{
+				settings.strDevice[nPos] = strAux[nPos];
+				nPos;
+			}
+			settings.strDevice[nPos] = '\0';
+		}
 	}
 
 	// Get Host info
@@ -243,136 +225,37 @@ bool sendHttpMultiPart(WinSocket *pSocket, const char *strBoundaryName, const ch
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-IWinScreenCapture *checkArguments(RequestArguments &arguments, const char *strCaps)
-{
-	const uint32_t nSizeX = ::GetSystemMetrics(SM_CXSCREEN);
-	const uint32_t nSizeY = ::GetSystemMetrics(SM_CYSCREEN);
-	if (!arguments.nCX || !arguments.nCY ||
-		(arguments.nX0 + arguments.nCX > nSizeX) ||
-		(arguments.nY0 + arguments.nCY > nSizeY))
-	{
-		arguments.nX0 = 0;       arguments.nY0 = 0;
-		arguments.nCX = nSizeX;  arguments.nCY = nSizeY;
-	}
-	if (arguments.nWidth && !arguments.nHeight)
-	{
-		arguments.nHeight = (arguments.nWidth * arguments.nCY) / arguments.nCX;
-	}
-	if (!arguments.nWidth && arguments.nHeight)
-	{
-		arguments.nWidth = (arguments.nHeight * arguments.nCX) / arguments.nCY;
-	}
-	if (!arguments.nWidth && !arguments.nHeight)
-	{
-		arguments.nWidth  = arguments.nCX;
-		arguments.nHeight = arguments.nCY;
-	}
-	if (!arguments.nFPS)
-	{
-		arguments.nFPS = 25;
-	}
-
-	// Take care about resizing aspect ratio
-	uint32_t nDstWidth = arguments.nCX;
-	uint32_t nDstHeight = arguments.nCY;
-	if (nDstWidth > arguments.nWidth)
-	{
-		nDstWidth = arguments.nWidth;
-		nDstHeight = (nDstWidth * arguments.nCY) / arguments.nCX;
-	}
-	if (nDstHeight > arguments.nHeight)
-	{
-		nDstHeight = arguments.nHeight;
-		nDstWidth = (nDstHeight * arguments.nCX) / arguments.nCY;
-	}
-
-	// Set destination size
-	arguments.nWidth  = nDstWidth;
-	arguments.nHeight = nDstHeight;
-
-	// Set capturer
-	IWinScreenCapture *pRet = nullptr;
-	switch (arguments.eCapturer)
-	{
-		case Capturer::None:
-			break;
-		case Capturer::Unknown: // Fallthrough
-		case Capturer::GDI:
-			if (::strstr(strCaps, "\"GDI\""))
-			{
-				LOG_INFO("Using GDI capture...\n");
-				pRet = new WinScreenCapture_GDI;
-			}
-			else LOG_ERROR("GDI capture not available!\n");
-			break;
-		case Capturer::GDIplus:
-			if (::strstr(strCaps, "\"GDI+\""))
-			{
-				LOG_INFO("Using GDI+ capturer...\n");
-				pRet = new WinScreenCapture_GDIplus;
-			}
-			else LOG_ERROR("GDI+ capture not available!\n");
-			break;
-		case Capturer::D3D9:
-			if (::strstr(strCaps, "\"D3D9\""))
-			{
-				LOG_INFO("Using D3D9 capturer...\n");
-				pRet = new WinScreenCapture_D3D9;
-			}
-			else LOG_ERROR("D3D9 capture not available!\n");
-			break;
-		case Capturer::D3D11:
-			if (::strstr(strCaps, "\"D3D11\""))
-			{
-				LOG_INFO("Using D3D11 capturer...\n");
-				pRet = new WinScreenCapture_D3D11;
-			}
-			else LOG_ERROR("D3D11 capture not available!\n");
-			break;
-		case Capturer::RDP:
-			if (::strstr(strCaps, "\"RDP\""))
-			{
-				LOG_INFO("Using RDP capturer...\n");
-				pRet = new WinScreenCapture_RDP;
-			}
-			else LOG_ERROR("RDP capture not available!\n");
-			break;
-	}
-	return pRet;
-}
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-
-void onUnkownCmd(WinSocket *pSocket, RequestArguments &/*arguments*/, const char * /*strCaps*/)
+void onUnkownCmd(WinSocket *pSocket, WinScreenCaptureHelper::Settings &/*settings*/, const WinScreenCaptureHelper * /*pScreenCapturerHelper*/)
 {
 	sendHttpBadRequest(pSocket);
 }
 //-------------------------------------------------------------------------------------------------
 
-void onHealthCheckCmd(WinSocket *pSocket, RequestArguments &arguments, const char *strCaps)
+void onHealthCheckCmd(WinSocket *pSocket, WinScreenCaptureHelper::Settings &settings, const WinScreenCaptureHelper *pScreenCapturerHelper)
 {
-	IWinScreenCapture *pScreenCapture = checkArguments(arguments, strCaps);
-	char strJson[256];
-	::sprintf(strJson, "{ \"ip\" : \"%s\", \"hostname\" : \"%s\", \"width\" : %u, \"height\" : %u, \"caps\" : %s }",
-		pSocket->getIpAddress(WinSocket::getHostName()), WinSocket::getHostName(), arguments.nWidth, arguments.nHeight, strCaps);
+	IWinScreenCapture *pScreenCapture = pScreenCapturerHelper->checkSettings(settings);
+	char strJson[4096];
+	::sprintf(strJson, "{ \"ip\" : \"%s\", \"hostname\" : \"%s\", \"width\" : %u, \"height\" : %u, \"caps\" : %s, \"devices\" : %s }",
+		pSocket->getIpAddress(WinSocket::getHostName()), WinSocket::getHostName(), settings.nWidth, settings.nHeight,
+		pScreenCapturerHelper->getCapabilitiesString().c_str(), pScreenCapturerHelper->getDisplayDevicesString().c_str());
 	sendHttpOK(pSocket, "application/json", (const uint8_t*)strJson, (uint32_t)strlen(strJson));
 	if (pScreenCapture) delete pScreenCapture;
 }
 //-------------------------------------------------------------------------------------------------
 
-void onScreenShotCmd(WinSocket *pSocket, RequestArguments &arguments, const char *strCaps)
+void onScreenShotCmd(WinSocket *pSocket, WinScreenCaptureHelper::Settings &settings, const WinScreenCaptureHelper *pScreenCapturerHelper)
 {
-	IWinScreenCapture *pScreenCapture = checkArguments(arguments, strCaps);
+	IWinScreenCapture *pScreenCapture = pScreenCapturerHelper->checkSettings(settings);
 	if (pScreenCapture)
 	{
-		const uint32_t nBufferSize = ((arguments.nWidth * arguments.nHeight * BPS) / 8) + 100;
-		uint8_t *pBuffer = (uint8_t*) ::malloc(nBufferSize);
+		const uint32_t nBufferSize = ((settings.nWidth * settings.nHeight * BPS) / 8) + 100;
+		uint8_t *pBuffer = (uint8_t*)::malloc(nBufferSize);
 		if (pBuffer)
 		{
 			CImage img;
-			if (img.Create(arguments.nWidth, arguments.nHeight, BPS))
+			if (img.Create(settings.nWidth, settings.nHeight, BPS))
 			{
-				if (pScreenCapture->captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img))
+				if (pScreenCapture->captureScreenRect(settings.nX0, settings.nY0, settings.nCX, settings.nCY, img))
 				{
 					WinMemStream stream(pBuffer, nBufferSize, false);
 					img.Save(&stream, ImageFormatJPEG);
@@ -390,22 +273,22 @@ void onScreenShotCmd(WinSocket *pSocket, RequestArguments &arguments, const char
 }
 //-------------------------------------------------------------------------------------------------
 
-void onVideoCmd(WinSocket *pSocket, RequestArguments &arguments, const char *strCaps)
+void onVideoCmd(WinSocket *pSocket, WinScreenCaptureHelper::Settings &settings, const WinScreenCaptureHelper *pScreenCapturerHelper)
 {
-	IWinScreenCapture *pScreenCapture = checkArguments(arguments, strCaps);
+	IWinScreenCapture *pScreenCapture = pScreenCapturerHelper->checkSettings(settings);
 	if (pScreenCapture)
 	{
-		const uint32_t nBufferSize = ((arguments.nWidth * arguments.nHeight * BPS) / 8) + 100;
-		uint8_t *pBuffer = (uint8_t*) ::malloc(nBufferSize);
+		const uint32_t nBufferSize = ((settings.nWidth * settings.nHeight * BPS) / 8) + 100;
+		uint8_t *pBuffer = (uint8_t*)::malloc(nBufferSize);
 		if (pBuffer)
 		{
 			CImage img;
-			if (img.Create(arguments.nWidth, arguments.nHeight, BPS))
+			if (img.Create(settings.nWidth, settings.nHeight, BPS))
 			{
-				const double dExpectedTimeBetweenFrames = 1.0 / ((double)arguments.nFPS);
+				const double dExpectedTimeBetweenFrames = 1.0 / ((double)settings.nFPS);
 				double dAvgTimeBetweenFrames = dExpectedTimeBetweenFrames;
 				std::chrono::high_resolution_clock::time_point tpBegin = std::chrono::high_resolution_clock::now();
-				if (pScreenCapture->captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img))
+				if (pScreenCapture->captureScreenRect(settings.nX0, settings.nY0, settings.nCX, settings.nCY, img))
 				{
 					sendHttpOK(pSocket, "multipart/x-mixed-replace; boundary=\"SCREENCAP_MJPEG\"", nullptr, 0);
 					for ( ; ; )
@@ -413,7 +296,7 @@ void onVideoCmd(WinSocket *pSocket, RequestArguments &arguments, const char *str
 						WinMemStream stream(pBuffer, nBufferSize, false);
 						img.Save(&stream, ImageFormatJPEG);
 						if (!sendHttpMultiPart(pSocket, "SCREENCAP_MJPEG", "image/jpeg", stream.getData(), stream.getSize()) ||
-							!pScreenCapture->captureScreenRect(arguments.nX0, arguments.nY0, arguments.nCX, arguments.nCY, img))
+							!pScreenCapture->captureScreenRect(settings.nX0, settings.nY0, settings.nCX, settings.nCY, img))
 							break;
 
 						// Compute elapsed time and perform a sleep to meet FPS requirements (if needed)
@@ -439,24 +322,16 @@ void onVideoCmd(WinSocket *pSocket, RequestArguments &arguments, const char *str
 
 void onHttpConnection(WinSocket *pSocket, void *pParam)
 {
-	const char *strCaps = reinterpret_cast<const char*>(pParam);
-	RequestArguments arguments;
-	arguments.nWidth    = 0;
-	arguments.nHeight   = 0;
-	arguments.nX0       = 0;
-	arguments.nY0       = 0;
-	arguments.nCX       = 0;
-	arguments.nCY       = 0;
-	arguments.nFPS      = 0;
-	arguments.eCapturer = Capturer::Unknown;
+	const WinScreenCaptureHelper *pScreenCaptureHelper = reinterpret_cast<const WinScreenCaptureHelper*>(pParam);
+	WinScreenCaptureHelper::Settings settings;
 
 	// Process the request
-	switch (processHttpRequest(pSocket, arguments))
+	switch (processHttpRequest(pSocket, settings))
 	{
-		case Mode::Unknown:     onUnkownCmd(pSocket, arguments, strCaps); break;
-		case Mode::HealthCheck: onHealthCheckCmd(pSocket, arguments, strCaps); break;
-		case Mode::ScreenShot:  onScreenShotCmd(pSocket, arguments, strCaps); break;
-		case Mode::Video:       onVideoCmd(pSocket, arguments, strCaps); break;
+		case Mode::Unknown:     onUnkownCmd(pSocket, settings, pScreenCaptureHelper); break;
+		case Mode::HealthCheck: onHealthCheckCmd(pSocket, settings, pScreenCaptureHelper); break;
+		case Mode::ScreenShot:  onScreenShotCmd(pSocket, settings, pScreenCaptureHelper); break;
+		case Mode::Video:       onVideoCmd(pSocket, settings, pScreenCaptureHelper); break;
 	}
 	
 	// Free up resources
@@ -468,12 +343,14 @@ void onHttpConnection(WinSocket *pSocket, void *pParam)
 
 int main(int argc, char *argv[])
 {
-	LOG_INFO("ScreenCaptureServer v1.0.3. By @aviloria\n");
+	LOG_INFO("ScreenCaptureServer v1.0.4. By @aviloria\n");
 	
 	// Parameter validation
 	const char *strInterface = nullptr;
 	uint16_t    nPort = 8080;
 	uint16_t    nMaxConnections = 10;
+	bool        bHide = false;
+	bool        bMinimize = false;
 	for (int n = 1; n < argc; ++n)
 	{
 		if (::strstr(argv[n], "-i:") == argv[n])
@@ -488,6 +365,14 @@ int main(int argc, char *argv[])
 		{
 			nMaxConnections = atoi(argv[n] + 3);
 		}
+		else if (!::strcmp(argv[n], "-hide"))
+		{
+			bHide = true;
+		}
+		else if (!::strcmp(argv[n], "-minimize"))
+		{
+			bMinimize = true;
+		}
 		else
 		{
 			LOG_INFO("Syntax:\n");
@@ -499,38 +384,32 @@ int main(int argc, char *argv[])
 			LOG_INFO("                       Default value: 8080\n");
 			LOG_INFO("-c:<nMaxConnections>   Maximum simultanous connections\n");
 			LOG_INFO("                       Default value: 10\n");
+			LOG_INFO("-hide                  Hide console on start\n");
+			LOG_INFO("-minimize              Minimize console on start\n");
 			return 1;
 		}
 	}
 
-	// Check capabilities
-	LOG_INFO("\nChecking capabilities...\n");
-	char strCaps[128] = { 0 };
-	if (!strCaps[0])
-	{
-		CImage imgTmp;
-		imgTmp.Create(1, 1, BPS);
+	// Check hidden/minimize flags
+	if (bMinimize)
+		ShowWindow(GetConsoleWindow(), SW_SHOWMINIMIZED);
+	if (bHide)
+		ShowWindow(GetConsoleWindow(), SW_HIDE);
 
-		int nCaps = 0;
-		::strcat(strCaps, "[");
-		CHECK_CAP(WinScreenCapture_GDI,     strCaps, nCaps, "GDI",   imgTmp);
-		CHECK_CAP(WinScreenCapture_GDIplus, strCaps, nCaps, "GDI+",  imgTmp);
-		CHECK_CAP(WinScreenCapture_D3D9,    strCaps, nCaps, "D3D9",  imgTmp);
-		CHECK_CAP(WinScreenCapture_D3D11,   strCaps, nCaps, "D3D11", imgTmp);
-    CHECK_CAP(WinScreenCapture_RDP,     strCaps, nCaps, "RDP",   imgTmp);
-    ::strcat(strCaps, " ]");
-	}
+	// Initialize the capturer helper
+	WinScreenCaptureHelper helper;
 
 	// Log server info
 	LOG_INFO("\nStarting server...\n");
 	LOG_INFO("+ Interface : %s\n", strInterface ? strInterface : "ANY");
 	LOG_INFO("+ Port      : %u\n", nPort);
 	LOG_INFO("+ Sim. conn.: %u\n", nMaxConnections);
-	LOG_INFO("+ Capabilit.: %s\n", strCaps);
+	LOG_INFO("+ Caps.     : %s\n", helper.getCapabilitiesString().c_str());
+	LOG_INFO("+ Disp.Devs.: %s\n", helper.getDisplayDevicesString().c_str());
 
 	// Start server
 	WinSocket server;
-	server.startServer(strInterface, nPort, onHttpConnection, strCaps, nMaxConnections);
+	server.startServer(strInterface, nPort, onHttpConnection, &helper, nMaxConnections);
 	return 0;
 }
 //-------------------------------------------------------------------------------------------------

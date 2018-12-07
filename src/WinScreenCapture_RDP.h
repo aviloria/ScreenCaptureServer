@@ -10,7 +10,7 @@
 #ifndef __WINSCREENCAPTURE_RDP_H__
 #define __WINSCREENCAPTURE_RDP_H__
 //-------------------------------------------------------------------------------------------------
-#include "IWinScreenCapture.h"
+#include "WinScreenCapture_GDI.h"
 #include <Windows.h>
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -18,16 +18,10 @@
 /**
  * Screen capture class for capturing using RDP Mirror Driver (Windows 7)
  */
-class WinScreenCapture_RDP : public IWinScreenCapture
+class WinScreenCapture_RDP : public WinScreenCapture_GDI
 {
 public:
-	WinScreenCapture_RDP();
-	~WinScreenCapture_RDP();
-
-	BOOL captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img);
-
-private:
-	HDC _hDCScreen;
+	WinScreenCapture_RDP(const TCHAR *strDevice=NULL);
 };
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

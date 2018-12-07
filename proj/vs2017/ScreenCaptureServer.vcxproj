@@ -157,6 +157,7 @@
     <ClCompile Include="..\..\src\WinScreenCapture_GDI+.cpp" />
     <ClCompile Include="..\..\src\WinScreenCapture_GDI.cpp" />
     <ClCompile Include="..\..\src\WinScreenCapture_RDP.cpp" />
+    <ClCompile Include="..\..\src\WinScreenCaptureHelper.cpp" />
     <ClCompile Include="..\..\src\WinSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +168,7 @@
     <ClInclude Include="..\..\src\WinScreenCapture_GDI+.h" />
     <ClInclude Include="..\..\src\WinScreenCapture_GDI.h" />
     <ClInclude Include="..\..\src\WinScreenCapture_RDP.h" />
+    <ClInclude Include="..\..\src\WinScreenCaptureHelper.h" />
     <ClInclude Include="..\..\src\WinSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

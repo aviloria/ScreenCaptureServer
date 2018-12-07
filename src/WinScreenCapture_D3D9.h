@@ -21,12 +21,15 @@
 class WinScreenCapture_D3D9 : public IWinScreenCapture
 {
 public:
-	WinScreenCapture_D3D9();
+	WinScreenCapture_D3D9(const TCHAR *strDisplayDevice=NULL);
 	~WinScreenCapture_D3D9();
+
+	BOOL getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const;
 
 	BOOL captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img);
 
 private:
+	UINT               _nAdapterId;
 	IDirect3D9        *_pD3D;
 	IDirect3DDevice9  *_pDevice;
 	IDirect3DSurface9 *_pSurface;

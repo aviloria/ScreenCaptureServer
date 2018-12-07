@@ -19,11 +19,14 @@
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-WinScreenCapture_GDI::WinScreenCapture_GDI()
+WinScreenCapture_GDI::WinScreenCapture_GDI(const TCHAR *strDisplayDevice)
 {
+	if (!strDisplayDevice)
+		strDisplayDevice = _T("DISPLAY");
+
 	// Create a screen device context
 	//_hDCScreen = GetDC(NULL); // HDC only of primary monitor
-	_hDCScreen = ::CreateDC(_T("DISPLAY"), NULL, NULL, NULL); // Create a DC covering all the monitors
+	_hDCScreen = ::CreateDC(strDisplayDevice, NULL, NULL, NULL); // Create a DC covering all the monitors
 }
 //-------------------------------------------------------------------------------------------------
 
@@ -34,6 +37,15 @@ WinScreenCapture_GDI::~WinScreenCapture_GDI()
 	{
 		::DeleteDC(_hDCScreen);
 	}
+}
+//-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+
+BOOL WinScreenCapture_GDI::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const
+{
+	nSizeX = ::GetSystemMetrics(SM_CXSCREEN);
+	nSizeY = ::GetSystemMetrics(SM_CYSCREEN);
+	return TRUE;
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

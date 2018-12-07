@@ -26,6 +26,8 @@ public:
 	IWinScreenCapture() {}
 	virtual ~IWinScreenCapture() {}
 
+	virtual BOOL getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const = 0;
+
 	virtual BOOL captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img) = 0;
 };
 //-------------------------------------------------------------------------------------------------

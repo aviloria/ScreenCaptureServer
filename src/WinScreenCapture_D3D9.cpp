@@ -19,17 +19,49 @@
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-WinScreenCapture_D3D9::WinScreenCapture_D3D9()
-	: _pD3D(nullptr)
+WinScreenCapture_D3D9::WinScreenCapture_D3D9(const TCHAR *strDisplayDevice)
+	: _nAdapterId(0xFFFFFFFF)
+	, _pD3D(nullptr)
 	, _pDevice(nullptr)
 	, _pSurface(nullptr)
 {
-	static const UINT nAdapter = D3DADAPTER_DEFAULT;
-	D3DDISPLAYMODE mode;
 	_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
 	if (_pD3D)
 	{
-		HRESULT hr = _pD3D->GetAdapterDisplayMode(nAdapter, &mode);
+		// Get D3D9 Adapter Identifier
+		if (strDisplayDevice)
+		{
+			// Convert strDisplayDevice from wchar to char (if needed)
+#if defined(_UNICODE)
+			char strTargetDisplayDevice[32] = { '\0' };
+			const INT nTargetDisplayDeviceLength = WideCharToMultiByte(CP_ACP, 0, strDisplayDevice, (int)::_tcslen(strDisplayDevice), strTargetDisplayDevice, 32, NULL, NULL);
+			if (nTargetDisplayDeviceLength < 0) nTargetDisplayDeviceLength = 0;
+			strTargetDisplayDevice[nTargetDisplayDeviceLength] = '\0';
+#else
+			const char *strTargetDisplayDevice = strDisplayDevice;
+#endif
+
+			// Look for the requested display device
+			const UINT nMaxAdapters = _pD3D->GetAdapterCount();
+			D3DADAPTER_IDENTIFIER9 adapterIdendifier;
+			for (UINT nAdapter = 0; nAdapter < nMaxAdapters; ++nAdapter)
+			{
+				if (_pD3D->GetAdapterIdentifier(nAdapter, 0, &adapterIdendifier) == D3D_OK)
+				{
+					if (!::strcmp(strTargetDisplayDevice, adapterIdendifier.DeviceName))
+					{
+						_nAdapterId = nAdapter;
+						break;
+					}
+				}
+				else break;
+			}
+		}
+		else _nAdapterId = D3DADAPTER_DEFAULT;
+
+		// Initialize capturer
+		D3DDISPLAYMODE mode;
+		HRESULT hr = _pD3D->GetAdapterDisplayMode(_nAdapterId, &mode);
 		if (SUCCEEDED(hr))
 		{
 			D3DPRESENT_PARAMETERS parameters;
@@ -40,7 +72,7 @@ WinScreenCapture_D3D9::WinScreenCapture_D3D9()
 			parameters.SwapEffect       = D3DSWAPEFFECT_DISCARD;
 			parameters.Windowed         = TRUE;
 
-			hr = _pD3D->CreateDevice(nAdapter, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &parameters, &_pDevice);
+			hr = _pD3D->CreateDevice(_nAdapterId, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &parameters, &_pDevice);
 			if (SUCCEEDED(hr))
 			{
 				hr = _pDevice->CreateOffscreenPlainSurface(mode.Width, mode.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &_pSurface, nullptr);
@@ -72,6 +104,20 @@ WinScreenCapture_D3D9::~WinScreenCapture_D3D9()
 	{
 		_pD3D->Release();
 	}
+}
+//-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+
+BOOL WinScreenCapture_D3D9::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const
+{
+	D3DDISPLAYMODE mode;
+	if (_pD3D && SUCCEEDED(_pD3D->GetAdapterDisplayMode(_nAdapterId, &mode)))
+	{
+		nSizeX = mode.Width;
+		nSizeY = mode.Height;
+		return TRUE;
+	}
+	return FALSE;
 }
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

@@ -20,8 +20,10 @@
 class WinScreenCapture_GDIplus : public IWinScreenCapture
 {
 public:
-	WinScreenCapture_GDIplus();
+	WinScreenCapture_GDIplus(const TCHAR *strDisplayDevice=NULL);
 	~WinScreenCapture_GDIplus();
+
+	BOOL getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const;
 
 	BOOL captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img);
 

@@ -26,30 +26,30 @@
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-WinScreenCapture_D3D11::WinScreenCapture_D3D11()
+WinScreenCapture_D3D11::WinScreenCapture_D3D11(const TCHAR *strDisplayDevice)
 	: _pD3D11Device(nullptr)
 	, _pD3D11Context(nullptr)
 	, _pDxgiOutput(nullptr)
 	, _pDxgiOutputDuplication(nullptr)
 	, _pTexture(nullptr)
 {
-	IDXGIAdapter1 *pDxgiAdapterAttachedToDesktop = nullptr;
-	IDXGIOutput   *pDxgiOutputAttachedToDesktop = nullptr;
+	IDXGIAdapter1 *pDxgiAdapterSelected = nullptr;
+	IDXGIOutput   *pDxgiOutputSelected = nullptr;
 	DXGI_OUTPUT_DESC outputDesc;
 
 	// Look for the output instance currently attached to desktop.
 	IDXGIFactory1* pDxgiFactory = nullptr;
-	HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (LPVOID*) &pDxgiFactory);
+	HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (LPVOID*)&pDxgiFactory);
 	if (SUCCEEDED(hr))
 	{
 		IDXGIAdapter1 *pDxgiAdapter = nullptr;
-		for (UINT nAdapterId = 0; !pDxgiAdapterAttachedToDesktop; ++nAdapterId)
+		for (UINT nAdapterId = 0; !pDxgiAdapterSelected; ++nAdapterId)
 		{
 			hr = pDxgiFactory->EnumAdapters1(nAdapterId, &pDxgiAdapter);
 			if(SUCCEEDED(hr))
 			{
 				IDXGIOutput *pDxgiOutput = nullptr;
-				for (UINT nOutputId = 0; !pDxgiOutputAttachedToDesktop; ++nOutputId)
+				for (UINT nOutputId = 0; !pDxgiOutputSelected; ++nOutputId)
 				{
 					hr = pDxgiAdapter->EnumOutputs(nOutputId, &pDxgiOutput);
 					if(SUCCEEDED(hr))
@@ -57,10 +57,12 @@ WinScreenCapture_D3D11::WinScreenCapture_D3D11()
 						hr = pDxgiOutput->GetDesc(&outputDesc);
 						if (SUCCEEDED(hr))
 						{
-							if (outputDesc.AttachedToDesktop)
+							LOG_INFO("  %2u> DeviceName: %S\n", nOutputId, outputDesc.DeviceName);
+							if ((!strDisplayDevice && outputDesc.AttachedToDesktop) ||
+								!::_tcscmp(strDisplayDevice, outputDesc.DeviceName))
 							{
-								pDxgiAdapterAttachedToDesktop = pDxgiAdapter;
-								pDxgiOutputAttachedToDesktop  = pDxgiOutput;
+								pDxgiAdapterSelected = pDxgiAdapter;
+								pDxgiOutputSelected  = pDxgiOutput;
 
 								// Break here to avoid to release these interfaces
 								break;
@@ -73,7 +75,7 @@ WinScreenCapture_D3D11::WinScreenCapture_D3D11()
 						LOG_ERROR("EnumOutputs() Failed to get IDXGIOutput interface %u at IDXGIAdapter1 interdace %u... ignoring it! hr=0x%08x\n", nOutputId, nAdapterId, (UINT)hr);
 					else break;
 				}
-				if (!pDxgiOutputAttachedToDesktop) pDxgiAdapter->Release();
+				if (!pDxgiOutputSelected) pDxgiAdapter->Release();
 			}
 			else if(hr != DXGI_ERROR_NOT_FOUND)
 				LOG_ERROR("EnumAdapters1() Failed to get IDXGIAdapter1 interface %u... ignoring it! hr=0x%08x\n", nAdapterId,(UINT)hr);
@@ -84,18 +86,18 @@ WinScreenCapture_D3D11::WinScreenCapture_D3D11()
 	else LOG_ERROR("CreateDXGIFactory1() failed to retrieve the IDXGIFactory! hr=0x%08x\n", (UINT)hr);
 
 
-	if (pDxgiAdapterAttachedToDesktop && pDxgiOutputAttachedToDesktop)
+	if (pDxgiAdapterSelected && pDxgiOutputSelected)
 	{
 		// NOTE: Apparently D3D11CreateDevice() fails when passing a pointer to an adapter (1st param) with D3D_DRIVER_TYPE_HARDWARE (2nd param).
 		// To be able to pass a valid pointer for the adapter, you need to use D3D_DRIVER_TYPE_UNKNOWN.
 		D3D_FEATURE_LEVEL featureLevel;
-		hr = D3D11CreateDevice (pDxgiAdapterAttachedToDesktop, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
+		hr = D3D11CreateDevice(pDxgiAdapterSelected, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
 			D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION, &_pD3D11Device, &featureLevel, &_pD3D11Context);
 		if (SUCCEEDED(hr))
 		{
 			if (featureLevel >= D3D_FEATURE_LEVEL_11_0)
 			{
-				hr = pDxgiOutputAttachedToDesktop->QueryInterface(__uuidof(IDXGIOutput1), (LPVOID*) &_pDxgiOutput);
+				hr = pDxgiOutputSelected->QueryInterface(__uuidof(IDXGIOutput1), (LPVOID*)&_pDxgiOutput);
 				if (SUCCEEDED(hr))
 				{
 					// When we are initializing the DXGI, retrying several times to avoid any temporary issue, such as display mode changing,
@@ -134,8 +136,8 @@ WinScreenCapture_D3D11::WinScreenCapture_D3D11()
 		}
 		else LOG_ERROR("D3D11CreateDevice() returned error code 0x%08x!\n", (UINT)hr);
 
-		pDxgiOutputAttachedToDesktop->Release();
-		pDxgiAdapterAttachedToDesktop->Release();
+		pDxgiOutputSelected->Release();
+		pDxgiAdapterSelected->Release();
 	}
 	else LOG_ERROR("WinScreenCapture_D3D11() Unable to find a pair <Adapters,Output> attached to desktop!\n");
 }
@@ -159,15 +161,31 @@ BOOL WinScreenCapture_D3D11::duplicateOutput()
 	HRESULT hr = _pDxgiOutput->DuplicateOutput(_pD3D11Device, &_pDxgiOutputDuplication);
 	if (SUCCEEDED(hr))
 	{
-		ZeroMemory(&_outputDuplDesc, sizeof(DXGI_OUTDUPL_DESC));
-		_pDxgiOutputDuplication->GetDesc(&_outputDuplDesc);
-		if (_outputDuplDesc.ModeDesc.Format == DXGI_FORMAT_B8G8R8A8_UNORM)
+		DXGI_OUTDUPL_DESC outputDuplDesc;
+		ZeroMemory(&outputDuplDesc, sizeof(DXGI_OUTDUPL_DESC));
+		_pDxgiOutputDuplication->GetDesc(&outputDuplDesc);
+		if (outputDuplDesc.ModeDesc.Format == DXGI_FORMAT_B8G8R8A8_UNORM)
 			return TRUE;
 
 		_pDxgiOutputDuplication->Release();  _pDxgiOutputDuplication = nullptr;
-		LOG_ERROR("IDXGIDuplicateOutput does not use RGBA (8 bit) format (format=%u)!\n", (UINT)_outputDuplDesc.ModeDesc.Format);
+		LOG_ERROR("IDXGIDuplicateOutput does not use RGBA (8 bit) format (format=%u)!\n", (UINT)outputDuplDesc.ModeDesc.Format);
 	}
 	else LOG_ERROR("DuplicateOutput() Failed to duplicate output from IDXGIOutput1! hr=0x%08x\n", (UINT)hr);
+	return FALSE;
+}
+//-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+
+BOOL WinScreenCapture_D3D11::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) const
+{
+	DXGI_OUTPUT_DESC outputDesc;
+	ZeroMemory(&outputDesc, sizeof(DXGI_OUTPUT_DESC));
+	if (_pDxgiOutput && SUCCEEDED(_pDxgiOutput->GetDesc(&outputDesc)))
+	{
+		nSizeX = outputDesc.DesktopCoordinates.right;
+		nSizeY = outputDesc.DesktopCoordinates.bottom;
+		return TRUE;
+	}
 	return FALSE;
 }
 //-------------------------------------------------------------------------------------------------
@@ -189,7 +207,7 @@ BOOL WinScreenCapture_D3D11::captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, 
 			if (SUCCEEDED(hr))
 			{
 				CImage *pWorkingImage = &img;
-				if (img.GetWidth() != _outputDuplDesc.ModeDesc.Width)
+				if ((img.GetWidth() != _imgTmp.GetWidth()) || (img.GetHeight() != _imgTmp.GetHeight()))
 					pWorkingImage = &_imgTmp;
 
 				const int  nImgPitch = pWorkingImage->GetPitch();

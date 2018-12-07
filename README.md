@@ -17,6 +17,8 @@ where 'options' is a combination of:
                          Default value: 8080
   -c:<nMaxConnections>   Maximum simultanous connections
                          Default value: 10
+  -hide                  Hide console on start
+  -minimize              Minimize console on start
 ```
 
 ### Command line examples
@@ -40,8 +42,11 @@ This request should return an HTTP 200 code including the following JSON payload
   width : <desktop-width>
   height : <desktop-height>
   caps : <capability-list>
+  devices : <display-device-list>
 }
 ```
+To allow cascade connection of devices (i.e.: multiple monitors connected to a graphics card port), one item on the <display-device-list> can be nested inside other devices.<br/>
+Use device "name" value in the HTTP for request to specify screen-capture on a specific display device.
 
 ### Snapshot mode
 ```
@@ -55,6 +60,7 @@ This request can include aditional parameters:
   * cx=<nCX>            Snapshot window width. Default value: Original screen width resolution
   * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
   * cap=<CAPTURER>      Capturer method to be used
+  * dev=<DEVICE_NAME>   Device name to be used for screen capturing
   
 Where CAPTURER can be one of these methods:
   * GDI                 Use GDI method to capture the desktop image (Default).
@@ -63,6 +69,7 @@ Where CAPTURER can be one of these methods:
   * D3D11               Use DirectX11 method to capture the desktop image.
                         Only for Windows 8 and higher. On Windows 7, it's available only with Aero themes.
   * RDP                 Use Remote Desktop Mirror Driver method to capture the desktop image (Windows 7 only)
+And DEVICE_NAME must be one valid value returned by the HealthCheck method
 ```
 All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.
@@ -88,17 +95,19 @@ Where CAPTURER can be one of these methods:
   * D3D11               Use DirectX11 method to capture the desktop image.
                         Only for Windows 8 and higher. On Windows 7, it's available only with Aero themes.
   * RDP                 Use Remote Desktop Mirror Driver method to capture the desktop image (Windows 7 only)
+And DEVICE_NAME must be one valid value returned by the HealthCheck method
 ```
 All these parameters are optional<br/>
 Provided <i>nWidth</i> and <i>nHeight</i> values can be modified in forder to keep aspect ratio, fitting to the best values.<br/>
 
-This stream can be easily embeded in a HTML page using [&lt;embed&gt; tag](https://www.w3schools.com/tags/tag_embed.asp), i.e.:
+This stream can be easily embeded in a HTML page using [&lt;embed&gt; tag](https://www.w3schools.com/tags/tag_embed.asp) or [&lt;img&gt; tag](https://www.w3schools.com/tags/tag_img.asp), i.e.:
 ```
 <embed src="http://<server-address>:<server-port>/getVideo" />
+<img src="http://<server-address>:<server-port>/getVideo" />
 ```
 
 ### Examples
 ```
   http://127.0.0.1:8080/getImage?width=640&x0=100&y0=100&cx=400&cy=400
-  http://127.0.0.1:8080/getVideo?width=640&fps=10&cap=D3D11
+  http://127.0.0.1:8080/getVideo?width=640&fps=10&cap=D3D11&dev=%5C%5C.%5CDISPLAY1
 ```
