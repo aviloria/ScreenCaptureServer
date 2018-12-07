@@ -57,7 +57,6 @@ WinScreenCapture_D3D11::WinScreenCapture_D3D11(const TCHAR *strDisplayDevice)
 						hr = pDxgiOutput->GetDesc(&outputDesc);
 						if (SUCCEEDED(hr))
 						{
-							LOG_INFO("  %2u> DeviceName: %S\n", nOutputId, outputDesc.DeviceName);
 							if ((!strDisplayDevice && outputDesc.AttachedToDesktop) ||
 								!::_tcscmp(strDisplayDevice, outputDesc.DeviceName))
 							{
