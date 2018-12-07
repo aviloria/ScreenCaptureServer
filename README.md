@@ -87,7 +87,8 @@ This request can include aditional parameters:
   * cy=<nCY>            Snapshot window height. Default value: Original screen height resolution
   * fps=<nFPS>          Aprox. frame rate (in frames per second). Default value: 25
   * cap=<CAPTURER>      Capturer method to be used
-  
+  * dev=<DEVICE_NAME>   Device name to be used for screen capturing
+
 Where CAPTURER can be one of these methods:
   * GDI                 Use GDI method to capture the desktop image (Default).
   * GDI+                Use GDI+ method to capture the desktop image.
