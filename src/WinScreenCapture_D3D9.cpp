@@ -29,7 +29,7 @@ WinScreenCapture_D3D9::WinScreenCapture_D3D9(const TCHAR *strDisplayDevice)
 	if (_pD3D)
 	{
 		// Get D3D9 Adapter Identifier
-		if (strDisplayDevice)
+	if (strDisplayDevice && *strDisplayDevice)
 		{
 			// Convert strDisplayDevice from wchar to char (if needed)
 #if defined(_UNICODE)
@@ -125,30 +125,38 @@ BOOL WinScreenCapture_D3D9::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) con
 BOOL WinScreenCapture_D3D9::captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img)
 {
 	BOOL nRet = FALSE;
-	HDC hDCScreen = NULL;
-	if ((nSizeX > 0) && (nSizeY > 0) && !img.IsNull() && _pSurface)
+	if (_pSurface)
 	{
-		HRESULT hr = _pDevice->GetFrontBufferData(0, _pSurface);
-		if (SUCCEEDED(hr))
+		if ((nSizeX > 0) && (nSizeY > 0))
 		{
-			hr = _pSurface->GetDC(&hDCScreen);
-			if (SUCCEEDED(hr))
+			if (!img.IsNull())
 			{
-				// Stretch-blit from screen to image device context
-				// Note: CAPTUREBLT flag is required to capture layered windows
-				HDC hDCImage = img.GetDC();
-				::SetStretchBltMode(hDCImage, HALFTONE);
-				nRet = ::StretchBlt(hDCImage, 0, 0, img.GetWidth(), img.GetHeight(), hDCScreen, nX0, nY0, nSizeX, nSizeY, SRCCOPY | CAPTUREBLT);
-				img.ReleaseDC();
+				HRESULT hr = _pDevice->GetFrontBufferData(0, _pSurface);
+				if (SUCCEEDED(hr))
+				{
+					HDC hDCScreen = NULL;
+					hr = _pSurface->GetDC(&hDCScreen);
+					if (SUCCEEDED(hr))
+					{
+						// Stretch-blit from screen to image device context
+						// Note: CAPTUREBLT flag is required to capture layered windows
+						HDC hDCImage = img.GetDC();
+						::SetStretchBltMode(hDCImage, HALFTONE);
+						nRet = ::StretchBlt(hDCImage, 0, 0, img.GetWidth(), img.GetHeight(), hDCScreen, nX0, nY0, nSizeX, nSizeY, SRCCOPY | CAPTUREBLT);
+						img.ReleaseDC();
 
-				// Clean up
-				_pSurface->ReleaseDC(hDCScreen);
+						// Clean up
+						_pSurface->ReleaseDC(hDCScreen);
+					}
+					else LOG_ERROR("GetDC() returned error code 0x%08x!\n", (UINT)hr);
+				}
+				else LOG_ERROR("GetFrontBufferData() returned error code 0x%08x!\n", (UINT)hr);
 			}
-			else LOG_ERROR("GetDC() returned error code 0x%08x!\n", (UINT)hr);
+			else LOG_ERROR("captureScreenRect() Target image was not initialized!\n");
 		}
-		else LOG_ERROR("GetFrontBufferData() returned error code 0x%08x!\n", (UINT)hr);
+		else LOG_ERROR("captureScreenRect() Invalid rect size (%ux%u)!\n", nSizeX, nSizeY);
 	}
-	else LOG_ERROR("captureScreenRect() Invalid rect size (%ux%u), target image was not initialized, or D3D9 surface was not set!\n", nSizeX, nSizeY);
+	else LOG_ERROR("captureScreenRect() Capturer was not properly initialized!\n");
 	return nRet;
 }
 //-------------------------------------------------------------------------------------------------

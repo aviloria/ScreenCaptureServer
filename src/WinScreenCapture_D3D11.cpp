@@ -57,7 +57,7 @@ WinScreenCapture_D3D11::WinScreenCapture_D3D11(const TCHAR *strDisplayDevice)
 						hr = pDxgiOutput->GetDesc(&outputDesc);
 						if (SUCCEEDED(hr))
 						{
-							if ((!strDisplayDevice && outputDesc.AttachedToDesktop) ||
+							if (((!strDisplayDevice || !*strDisplayDevice) && outputDesc.AttachedToDesktop) ||
 								!::_tcscmp(strDisplayDevice, outputDesc.DeviceName))
 							{
 								pDxgiAdapterSelected = pDxgiAdapter;
@@ -193,85 +193,93 @@ BOOL WinScreenCapture_D3D11::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) co
 BOOL WinScreenCapture_D3D11::captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img)
 {
 	BOOL nRet = FALSE;
-	if ((nSizeX > 0) && (nSizeY > 0) && !img.IsNull() && _pDxgiOutputDuplication)
+	if (_pDxgiOutputDuplication)
 	{
-		DXGI_OUTDUPL_FRAME_INFO frameInfo;
-		ZeroMemory(&frameInfo, sizeof(DXGI_OUTDUPL_FRAME_INFO));
-		IDXGIResource *pDxgiResource = nullptr;
-		HRESULT  hr = _pDxgiOutputDuplication->AcquireNextFrame(AQUIRE_TIMEOUT, &frameInfo, &pDxgiResource);
-		if (SUCCEEDED(hr))
+		if ((nSizeX > 0) && (nSizeY > 0))
 		{
-			ID3D11Texture2D *pTextureTmp = nullptr;
-			hr = pDxgiResource->QueryInterface(__uuidof(ID3D11Texture2D), (LPVOID*)&pTextureTmp);
-			if (SUCCEEDED(hr))
+			if (!img.IsNull())
 			{
-				CImage *pWorkingImage = &img;
-				if ((img.GetWidth() != _imgTmp.GetWidth()) || (img.GetHeight() != _imgTmp.GetHeight()))
-					pWorkingImage = &_imgTmp;
-
-				const int  nImgPitch = pWorkingImage->GetPitch();
-				const int  nImgStride = 4 * pWorkingImage->GetWidth();
-				uint8_t   *pDstData = (uint8_t*)pWorkingImage->GetBits();
-
-				DXGI_MAPPED_RECT mappedRect;
-				hr = _pDxgiOutputDuplication->MapDesktopSurface(&mappedRect);
+				DXGI_OUTDUPL_FRAME_INFO frameInfo;
+				ZeroMemory(&frameInfo, sizeof(DXGI_OUTDUPL_FRAME_INFO));
+				IDXGIResource *pDxgiResource = nullptr;
+				HRESULT  hr = _pDxgiOutputDuplication->AcquireNextFrame(AQUIRE_TIMEOUT, &frameInfo, &pDxgiResource);
 				if (SUCCEEDED(hr))
 				{
-					const uint8_t *pSrcData = ((const uint8_t*) mappedRect.pBits) + nY0 * mappedRect.Pitch + nX0 * 4;
-					for (unsigned int y = 0; y < nSizeY; ++y)
-					{
-						CopyMemory(pDstData, pSrcData, nImgStride);
-						pDstData += nImgPitch;
-						pSrcData += mappedRect.Pitch;
-					}
-					nRet = TRUE;
-					hr = _pDxgiOutputDuplication->UnMapDesktopSurface();
-					if (FAILED(hr))
-						LOG_ERROR("UnMapDesktopSurface() Failed to unmap the desktop surface! hr=0x%08x\n", (UINT)hr);
-				}
-				else if (hr == DXGI_ERROR_UNSUPPORTED)
-				{
-					// According to the docs, when we receive this error we need to transfer the image to a staging surface and then lock the image by calling IDXGISurface::Map().
-					_pD3D11Context->CopyResource(_pTexture, pTextureTmp);
-
-					D3D11_MAPPED_SUBRESOURCE mappedSubResource;
-					hr = _pD3D11Context->Map(_pTexture, 0, D3D11_MAP_READ, 0, &mappedSubResource);
+					ID3D11Texture2D *pTextureTmp = nullptr;
+					hr = pDxgiResource->QueryInterface(__uuidof(ID3D11Texture2D), (LPVOID*)&pTextureTmp);
 					if (SUCCEEDED(hr))
 					{
-						const uint8_t *pSrcData = ((const uint8_t*) mappedSubResource.pData) + nY0 * mappedSubResource.RowPitch + nX0 * 4;
-						for (unsigned int y = 0; y < nSizeY; ++y)
-						{
-							CopyMemory(pDstData, pSrcData, nImgStride);
-							pDstData += nImgPitch;
-							pSrcData += mappedRect.Pitch;
-						}
-						nRet = TRUE;
-						_pD3D11Context->Unmap(_pTexture, 0);
-					}
-					else LOG_ERROR("Map() Failed to map the staging texture! hr=0x%08x\n", (UINT)hr);
-				}
-				else LOG_ERROR("MapDesktopSurface() Failed to get access to the desktop surface! hr=0x%08x\n", (UINT)hr);
+						CImage *pWorkingImage = &img;
+						if ((img.GetWidth() != _imgTmp.GetWidth()) || (img.GetHeight() != _imgTmp.GetHeight()))
+							pWorkingImage = &_imgTmp;
 
-				if (nRet && (pWorkingImage != &img))
-				{
-					HDC hDCSrc = _imgTmp.GetDC();
-					HDC hDCDst = img.GetDC();
-					::SetStretchBltMode(hDCDst, HALFTONE);
-					nRet = ::StretchBlt(hDCDst, 0, 0, img.GetWidth(), img.GetHeight(), hDCSrc, nX0, nY0, nSizeX, nSizeY, SRCCOPY | CAPTUREBLT);
-					img.ReleaseDC();
-					_imgTmp.ReleaseDC();
+						const int  nImgPitch = pWorkingImage->GetPitch();
+						const int  nImgStride = 4 * pWorkingImage->GetWidth();
+						uint8_t   *pDstData = (uint8_t*)pWorkingImage->GetBits();
+
+						DXGI_MAPPED_RECT mappedRect;
+						hr = _pDxgiOutputDuplication->MapDesktopSurface(&mappedRect);
+						if (SUCCEEDED(hr))
+						{
+							const uint8_t *pSrcData = ((const uint8_t*) mappedRect.pBits) + nY0 * mappedRect.Pitch + nX0 * 4;
+							for (unsigned int y = 0; y < nSizeY; ++y)
+							{
+								CopyMemory(pDstData, pSrcData, nImgStride);
+								pDstData += nImgPitch;
+								pSrcData += mappedRect.Pitch;
+							}
+							nRet = TRUE;
+							hr = _pDxgiOutputDuplication->UnMapDesktopSurface();
+							if (FAILED(hr))
+								LOG_ERROR("UnMapDesktopSurface() Failed to unmap the desktop surface! hr=0x%08x\n", (UINT)hr);
+						}
+						else if (hr == DXGI_ERROR_UNSUPPORTED)
+						{
+							// According to the docs, when we receive this error we need to transfer the image to a staging surface and then lock the image by calling IDXGISurface::Map().
+							_pD3D11Context->CopyResource(_pTexture, pTextureTmp);
+
+							D3D11_MAPPED_SUBRESOURCE mappedSubResource;
+							hr = _pD3D11Context->Map(_pTexture, 0, D3D11_MAP_READ, 0, &mappedSubResource);
+							if (SUCCEEDED(hr))
+							{
+								const uint8_t *pSrcData = ((const uint8_t*) mappedSubResource.pData) + nY0 * mappedSubResource.RowPitch + nX0 * 4;
+								for (unsigned int y = 0; y < nSizeY; ++y)
+								{
+									CopyMemory(pDstData, pSrcData, nImgStride);
+									pDstData += nImgPitch;
+									pSrcData += mappedRect.Pitch;
+								}
+								nRet = TRUE;
+								_pD3D11Context->Unmap(_pTexture, 0);
+							}
+							else LOG_ERROR("Map() Failed to map the staging texture! hr=0x%08x\n", (UINT)hr);
+						}
+						else LOG_ERROR("MapDesktopSurface() Failed to get access to the desktop surface! hr=0x%08x\n", (UINT)hr);
+
+						if (nRet && (pWorkingImage != &img))
+						{
+							HDC hDCSrc = _imgTmp.GetDC();
+							HDC hDCDst = img.GetDC();
+							::SetStretchBltMode(hDCDst, HALFTONE);
+							nRet = ::StretchBlt(hDCDst, 0, 0, img.GetWidth(), img.GetHeight(), hDCSrc, nX0, nY0, nSizeX, nSizeY, SRCCOPY | CAPTUREBLT);
+							img.ReleaseDC();
+							_imgTmp.ReleaseDC();
+						}
+						pTextureTmp->Release();
+					}
+					else LOG_ERROR("QueryInterface() Failed to query the ID3D11Texture2D interface on the IDXGIResource! hr=0x%08x\n", (UINT)hr);
+					pDxgiResource->Release();
+					hr = _pDxgiOutputDuplication->ReleaseFrame();
+					if (FAILED(hr))
+						LOG_ERROR("ReleaseFrame() Failed releasing the duplication frame! hr=0x%08x\n", (UINT)hr);
 				}
-				pTextureTmp->Release();
+				else LOG_ERROR("AcquireNextFrame() Failed aquiring the next frame! hr=0x%08x\n", (UINT)hr);
 			}
-			else LOG_ERROR("QueryInterface() Failed to query the ID3D11Texture2D interface on the IDXGIResource! hr=0x%08x\n", (UINT)hr);
-			pDxgiResource->Release();
-			hr = _pDxgiOutputDuplication->ReleaseFrame();
-			if (FAILED(hr))
-				LOG_ERROR("ReleaseFrame() Failed releasing the duplication frame! hr=0x%08x\n", (UINT)hr);
+			else LOG_ERROR("captureScreenRect() Target image was not initialized!\n");
 		}
-		else LOG_ERROR("AcquireNextFrame() Failed aquiring the next frame! hr=0x%08x\n", (UINT)hr);
+		else LOG_ERROR("captureScreenRect() Invalid rect size (%ux%u)!\n", nSizeX, nSizeY);
 	}
-	else LOG_ERROR("captureScreenRect() Invalid rect size (%ux%u), target image was not initialized, or DXGI OutputDuplication was not set!\n", nSizeX, nSizeY);
+	else LOG_ERROR("captureScreenRect() Capturer was not properly initialized!\n");
 	return nRet;
 }
 //-------------------------------------------------------------------------------------------------

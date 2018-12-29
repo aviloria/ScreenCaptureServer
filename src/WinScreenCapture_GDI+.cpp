@@ -62,7 +62,7 @@ WinScreenCapture_GDIplus::WinScreenCapture_GDIplus(const TCHAR *strDisplayDevice
 	Gdiplus::Status st = Gdiplus::GdiplusStartup(&_gdiplusToken, &gdiplusStartupInput, NULL);
 	if (st == Gdiplus::Status::Ok)
 	{
-		if (!strDisplayDevice)
+		if (!strDisplayDevice || !*strDisplayDevice)
 			strDisplayDevice = _T("DISPLAY");
 
 		// Create a screen device context
@@ -97,16 +97,24 @@ BOOL WinScreenCapture_GDIplus::getCurrentScreenSize(UINT &nSizeX, UINT &nSizeY) 
 BOOL WinScreenCapture_GDIplus::captureScreenRect(UINT nX0, UINT nY0, UINT nSizeX, UINT nSizeY, CImage &img)
 {
 	BOOL nRet = FALSE;
-	if ((nSizeX > 0) && (nSizeY > 0) && !img.IsNull())
+	if (_hDCScreen)
 	{
-		// Stretch-blit from screen to image device context
-		// Note: CAPTUREBLT flag is required to capture layered windows
-		HDC hDCImage = img.GetDC();
-		::SetStretchBltMode(hDCImage, HALFTONE);
-		nRet = ::StretchBlt(hDCImage, 0, 0, img.GetWidth(), img.GetHeight(), _hDCScreen, nX0, nY0, nSizeX, nSizeY, SRCCOPY | CAPTUREBLT);
-		img.ReleaseDC();
+		if ((nSizeX > 0) && (nSizeY > 0))
+		{
+			if (!img.IsNull())
+			{
+				// Stretch-blit from screen to image device context
+				// Note: CAPTUREBLT flag is required to capture layered windows
+				HDC hDCImage = img.GetDC();
+				::SetStretchBltMode(hDCImage, HALFTONE);
+				nRet = ::StretchBlt(hDCImage, 0, 0, img.GetWidth(), img.GetHeight(), _hDCScreen, nX0, nY0, nSizeX, nSizeY, SRCCOPY | CAPTUREBLT);
+				img.ReleaseDC();
+			}
+			else LOG_ERROR("captureScreenRect() Target image was not initialized!\n");
+		}
+		else LOG_ERROR("captureScreenRect() Invalid rect size (%ux%u)!\n", nSizeX, nSizeY);
 	}
-	else LOG_ERROR("captureScreenRect() Invalid rect size (%ux%u), or target image was not initialized!\n", nSizeX, nSizeY);
+	else LOG_ERROR("captureScreenRect() Capturer was not properly initialized!\n");
 	return nRet;
 }
 //-------------------------------------------------------------------------------------------------

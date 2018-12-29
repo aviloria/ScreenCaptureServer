@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <thread>
+#include <chrono>
 #include "WinSocket.h"
 #include "WinMemStream.h"
 #include "WinScreenCaptureHelper.h"
@@ -343,7 +344,7 @@ void onHttpConnection(WinSocket *pSocket, void *pParam)
 
 int main(int argc, char *argv[])
 {
-	LOG_INFO("ScreenCaptureServer v1.0.4. By @aviloria\n");
+	LOG_INFO("ScreenCaptureServer v1.0.5b. By @aviloria\n");
 	
 	// Parameter validation
 	const char *strInterface = nullptr;
