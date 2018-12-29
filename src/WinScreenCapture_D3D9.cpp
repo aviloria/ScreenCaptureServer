@@ -29,7 +29,7 @@ WinScreenCapture_D3D9::WinScreenCapture_D3D9(const TCHAR *strDisplayDevice)
 	if (_pD3D)
 	{
 		// Get D3D9 Adapter Identifier
-	if (strDisplayDevice && *strDisplayDevice)
+		if (strDisplayDevice && *strDisplayDevice)
 		{
 			// Convert strDisplayDevice from wchar to char (if needed)
 #if defined(_UNICODE)
