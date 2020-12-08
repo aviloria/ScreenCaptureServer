@@ -72,7 +72,7 @@ WinScreenCapture_D3D9::WinScreenCapture_D3D9(const TCHAR *strDisplayDevice)
 			parameters.SwapEffect       = D3DSWAPEFFECT_DISCARD;
 			parameters.Windowed         = TRUE;
 
-			hr = _pD3D->CreateDevice(_nAdapterId, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &parameters, &_pDevice);
+			hr = _pD3D->CreateDevice(_nAdapterId, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &parameters, &_pDevice);
 			if (SUCCEEDED(hr))
 			{
 				hr = _pDevice->CreateOffscreenPlainSurface(mode.Width, mode.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &_pSurface, nullptr);
