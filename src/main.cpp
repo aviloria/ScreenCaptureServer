@@ -111,7 +111,7 @@ Mode processHttpRequest(WinSocket *pSocket, WinScreenCaptureHelper::Settings &se
 			while ((nPos < sizeof(settings.strDevice)) && (strAux[nPos] != ' ') && (strAux[nPos] != '&') && (strAux[nPos] != '\0'))
 			{
 				settings.strDevice[nPos] = strAux[nPos];
-				nPos;
+				++nPos;
 			}
 			settings.strDevice[nPos] = '\0';
 		}
@@ -262,15 +262,31 @@ void onScreenShotCmd(WinSocket *pSocket, WinScreenCaptureHelper::Settings &setti
 					img.Save(&stream, ImageFormatJPEG);
 					sendHttpOK(pSocket, "image/jpeg", stream.getData(), stream.getSize());
 				}
-				else sendHttpInternalError(pSocket);
+				else
+				{
+					LOG_ERROR("onScreenShotCmd() Unable to capute screen rect (x0:%u, y0:%u)-(w:%u, h:%u)\n", settings.nX0, settings.nY0, settings.nCX, settings.nCY);
+					sendHttpInternalError(pSocket);
+				}
 			}
-			else sendHttpInternalError(pSocket);
+			else
+			{
+				LOG_ERROR("onScreenShotCmd() Unable to create an image object (w:%u, h:%u)-{bps:%u}\n", settings.nWidth, settings.nHeight, BPS);
+				sendHttpInternalError(pSocket);
+			}
 			::free(pBuffer);
 		}
-		else sendHttpInternalError(pSocket);
+		else
+		{
+			LOG_ERROR("onScreenShotCmd() Unable to alloc memory for streaming (size:%u)\n", nBufferSize);
+			sendHttpInternalError(pSocket);
+		}
 		delete pScreenCapture;
 	}
-	else sendHttpInternalError(pSocket);
+	else
+	{
+		LOG_ERROR("onScreenShotCmd() Unable to initialize screen capturer\n");
+		sendHttpInternalError(pSocket);
+	}
 }
 //-------------------------------------------------------------------------------------------------
 
@@ -309,15 +325,31 @@ void onVideoCmd(WinSocket *pSocket, WinScreenCaptureHelper::Settings &settings, 
 						tpBegin = std::chrono::high_resolution_clock::now();
 					}
 				}
-				else sendHttpInternalError(pSocket);
+				else
+				{
+					LOG_ERROR("onVideoCmd() Unable to capute screen rect (x0:%u, y0:%u)-(w:%u, h:%u)\n", settings.nX0, settings.nY0, settings.nCX, settings.nCY);
+					sendHttpInternalError(pSocket);
+				}
 			}
-			else sendHttpInternalError(pSocket);
+			else
+			{
+				LOG_ERROR("onVideoCmd() Unable to create an image object (w:%u, h:%u)-{bps:%u}\n", settings.nWidth, settings.nHeight, BPS);
+				sendHttpInternalError(pSocket);
+			}
 			::free(pBuffer);
 		}
-		else sendHttpInternalError(pSocket);
+		else
+		{
+			LOG_ERROR("onVideoCmd() Unable to alloc memory for streaming (size:%u)\n", nBufferSize);
+			sendHttpInternalError(pSocket);
+		}
 		delete pScreenCapture;
 	}
-	else sendHttpInternalError(pSocket);
+	else
+	{
+		LOG_ERROR("onVideoCmd() Unable to initialize screen capturer\n");
+		sendHttpInternalError(pSocket);
+	}
 }
 //-------------------------------------------------------------------------------------------------
 
