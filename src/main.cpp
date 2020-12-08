@@ -376,7 +376,7 @@ void onHttpConnection(WinSocket *pSocket, void *pParam)
 
 int main(int argc, char *argv[])
 {
-	LOG_INFO("ScreenCaptureServer v1.0.5b. By @aviloria\n");
+	LOG_INFO("ScreenCaptureServer v1.0.6b. By @aviloria\n");
 	
 	// Parameter validation
 	const char *strInterface = nullptr;
